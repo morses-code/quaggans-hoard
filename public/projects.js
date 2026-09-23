@@ -30,6 +30,33 @@ function budgetWikiOffers(entry, row, snapshot) {
 }
 
 // Turn regular wiki tables into labelled cards; keep complex headers as tables.
+function mapBonusRotation(text) {
+  // Read the rotation from the wiki text, including older cached flattened lists.
+  const entries = [...text.matchAll(/\bWeek\s+(\d+)\s*[-–—:]\s*([\s\S]*?)(?=\bWeek\s+\d+\s*[-–—:]|$)/gi)];
+  if (entries.length < 2 || text.slice(0, entries[0].index).trim()) return null;
+  const table = element('table', 'map-bonus-rotation');
+  const caption = element('caption', '', 'Map bonus reward rotation');
+  const head = element('thead', '');
+  const labels = element('tr', '');
+  ['Week', 'Map', 'Reward total'].forEach(label => {
+    const th = element('th', '', label); th.scope = 'col'; labels.append(th);
+  });
+  head.append(labels);
+  const body = element('tbody', '');
+  for (const entry of entries) {
+    const value = entry[2].trim().replace(/\s*\/\s*$/, '');
+    if (!value) return null;
+    const reward = value.match(/^([\s\S]+?)\s*[-–—]\s*([\d,]+\s+total)\s*$/i);
+    const row = element('tr', '');
+    const week = element('th', 'rotation-week', `Week ${entry[1]}`); week.scope = 'row';
+    const map = element('td', 'rotation-map', reward ? reward[1].trim() : value);
+    const total = element('td', 'rotation-total', reward ? reward[2] : '—');
+    row.append(week, map, total); body.append(row);
+  }
+  table.append(caption, head, body);
+  return table;
+}
+
 function acquisitionCards(block, title) {
   if (!block.rows.length || !block.rows[0].length || block.spans?.[0]?.some(cell => !cell.header)) return null;
   const headers = block.rows[0].map(text => text.trim());
@@ -64,7 +91,11 @@ function acquisitionCards(block, title) {
     values.slice(1).forEach((value, i) => {
       if (!value.trim()) return;
       const fact = element('div', 'source-card-fact');
-      fact.append(element('dt', '', headers[i + 1]), element('dd', '', value));
+      const description = element('dd', '');
+      const rotation = mapBonusRotation(value);
+      if (rotation) { description.append(rotation); fact.classList.add('source-card-rotation'); }
+      else description.textContent = value;
+      fact.append(element('dt', '', headers[i + 1]), description);
       facts.append(fact);
     });
     card.append(facts);
@@ -76,6 +107,8 @@ function acquisitionCards(block, title) {
 function acquisitionTextCard(text, title) {
   const card = element('section', 'vendor-offer acquisition-source-card acquisition-prose');
   card.append(element('p', 'source-card-kicker', title));
+  const rotation = mapBonusRotation(text);
+  if (rotation) { card.append(rotation); return card; }
   const lines = text.split(/\n+/).map(line => line.trim()).filter(Boolean);
   if (lines.length > 1) {
     const list = element('ul', 'source-card-list');

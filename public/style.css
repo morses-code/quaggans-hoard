@@ -80,3 +80,15 @@ html{scrollbar-gutter:stable}html:has(#item-dialog[open]),body:has(#item-dialog[
 .wiki-source-section > summary::-webkit-details-marker { display: none; }
 .wiki-source-section > summary:after { content: '+'; margin-left: auto; color: #63867c; font-size: 20px; }
 .wiki-source-section[open] > summary:after { content: '-'; }
+
+.map-bonus-rotation { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 12px; color: #365956; }
+.map-bonus-rotation caption { text-align: left; font: 18px Georgia, serif; margin-bottom: 16px; color: #365956; }
+.map-bonus-rotation th, .map-bonus-rotation td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #dce5da; vertical-align: middle; line-height: 1.6; }
+.map-bonus-rotation thead th { font-size: 10px; color: #718478; font-weight: 600; }
+.map-bonus-rotation th:first-child { width: 22%; }
+.map-bonus-rotation th:last-child { width: 26%; }
+.map-bonus-rotation .rotation-week { font-size: 11px; font-weight: 600; }
+.map-bonus-rotation .rotation-total { color: #63516e; font-weight: 600; }
+.map-bonus-rotation tbody tr:nth-child(odd) { background: #e6eee355; }
+.source-card-fact.source-card-rotation { grid-template-columns: minmax(0, 1fr); }
+@media(max-width:760px) { .map-bonus-rotation th, .map-bonus-rotation td { padding: 10px 6px; } .map-bonus-rotation { font-size: 11px; } }

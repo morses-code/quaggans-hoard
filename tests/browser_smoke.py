@@ -30,6 +30,13 @@ ADVICE = {'status': 'check', 'reason': 'Not disposal advice', 'collections': [],
 SCRIPT = b"""
 async function smoke() {
   function expect(condition, message) { if (!condition) throw new Error(message); }
+  const rotationText = "Week 1 - Southsun Cove - 44 total Week 2 - none Week 3 - Fireheart Rise - 44 total Week 4 - Mount Maelstrom - 44 total Week 5 - Straits of Devastation - 44 total Week 6 - Frostgorge Sound - 44 total Week 7 - Malchor's Leap - 44 total Week 8 - Cursed Shore - 44 total";
+  const rotationCard = acquisitionTextCard(rotationText, 'Map bonus rewards');
+  const weeks = rotationCard.querySelectorAll('tbody tr');
+  expect(weeks.length === 8, 'flattened rotation becomes eight readable rows');
+  expect(weeks[1].querySelector('.rotation-map').textContent === 'none', 'empty reward week preserved');
+  expect(weeks[7].querySelector('.rotation-total').textContent === '44 total', 'wiki reward quantities preserved');
+  expect(mapBonusRotation('Important condition. ' + rotationText) === null, 'unrecognized introductory conditions remain intact');
   for (let i=0; i<100 && !current; i++) await new Promise(r => setTimeout(r, 50));
   expect(current, 'inventory did not load');
   expect($('bags').querySelectorAll('button.slot').length === 1, 'inventory visible while loading');
