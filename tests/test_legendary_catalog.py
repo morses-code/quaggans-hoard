@@ -87,3 +87,32 @@ class CatalogueTests(unittest.TestCase):
             self.assertIsNone(failed['items']['42']['percent'])
             self.assertEqual(len(failed['warnings']), 2)
             self.assertIsNone(catalog.collection_progress('first', fetch)['items']['43']['percent'])
+
+    def test_alternative_recipes_remain_separate(self):
+        second = '{{Recipe\n| source = Mystic Forge\n| quantity = 1\n| ingredient1 = 3 Other gift\n}}\n'
+        text = RECIPE.replace('== Notes ==', second + '== Notes ==')
+        self.assertEqual(len(catalog.recipe_options(text)), 2)
+        self.assertEqual(catalog.recipe_parts(text), [])
+        def fetch(path):
+            item_id = int(path.split('/')[-1])
+            return {'id': item_id, 'name': {900001: 'Example', 900002: 'Example gift', 900003: 'Other gift'}[item_id], 'flags': []}
+        def page(name):
+            return {'wikitext': {'*': text if name == 'Example' else '{{Item infobox\n| id = %s\n}}' % (900002 if name == 'Example gift' else 900003)}, 'revid': 1}
+        with patch.object(catalog, 'catalogue', return_value=[{'id': 900001}]), patch.object(wiki, 'page', side_effect=page):
+            first = catalog.definition(900001, fetch, 0)
+            second = catalog.definition(900001, fetch, 1)
+            self.assertEqual(first['nodes']['900001']['ingredients'], [{'id': 900002, 'count': 2}])
+            self.assertEqual(second['nodes']['900001']['ingredients'], [{'id': 900003, 'count': 3}])
+            self.assertEqual(second['selected_route'], 1)
+            with self.assertRaises(ValueError): catalog.definition(900001, fetch, 2)
+
+    def test_armory_items_cannot_fund_legendary_ingredients(self):
+        definition = {'root': 10, 'nodes': {
+            '10': {'id': 10, 'name': 'Combined legendary', 'ingredients': [{'id': 20, 'count': 1}]},
+            '20': {'id': 20, 'name': 'Ingredient legendary', 'ingredients': []}}}
+        def fetch(path, key):
+            if path == '/account/legendaryarmory': return [{'id': 20, 'count': 1}]
+            if path == '/account/bank' and key == 'physical': return [{'id': 20, 'count': 1}]
+            return []
+        self.assertFalse(legendary.progress('armory-only', fetch, definition)['tree']['ready'])
+        self.assertTrue(legendary.progress('physical', fetch, definition)['tree']['ready'])

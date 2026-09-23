@@ -122,7 +122,10 @@ that protection in place until Track is clicked. The tracking preference persist
 in browser mode and Windows; account progress is not stored to disk.
 
 The Bifrost retains its reviewed recipe tree in bifrost.json. Other projects import
-unambiguous, single-output wiki Mystic Forge and public API crafting recipes.
+verified, single-output wiki Mystic Forge and public API crafting recipes.
+When multiple root recipes are available, a recipe selector keeps their materials
+and progress separate. Track remembers the selected recipe. Legendary Armory
+ownership counts for the final item only, never as a spendable ingredient.
 Imports are bounded in depth and time. Unexpanded steps remain acquisition targets,
 and unsupported roots offer acquisition information without a fabricated recipe
 percentage. Public catalogue and recipe data are cached for six hours.

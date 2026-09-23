@@ -12,7 +12,7 @@ from pathlib import Path
 import server
 
 SERVICE = 'QuaggansHoard'
-PREFERENCE_KEYS = {'tyria.defaultCharacter', 'quaggansHoard.protectedItems', 'quaggansHoard.bifrostActive', 'quaggansHoard.selectedLegendary', 'quaggansHoard.trackedLegendary'}
+PREFERENCE_KEYS = {'tyria.defaultCharacter', 'quaggansHoard.protectedItems', 'quaggansHoard.bifrostActive', 'quaggansHoard.selectedLegendary', 'quaggansHoard.trackedLegendary', 'quaggansHoard.trackedRecipe'}
 
 
 class DesktopState:

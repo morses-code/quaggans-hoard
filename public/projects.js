@@ -7,6 +7,8 @@ let itemAcquisitionController;
 let legendaryItems = [];
 let selectedLegendary = 0;
 let trackedLegendary = 30698;
+let selectedRecipe = 0;
+let trackedRecipe = 0;
 let trackedCatalog;
 let trackedProgress;
 let selectionController;
@@ -21,7 +23,11 @@ function updateProjectHeading() {
   $('project-icon').hidden = !item?.icon?.startsWith('https://render.guildwars2.com/');
   if (!$('project-icon').hidden) $('project-icon').src = item.icon;
   $('project-guide').href = item?.source || 'https://wiki.guildwars2.com/wiki/' + encodeURIComponent(projectName().replaceAll(' ', '_'));
-  const tracking = bifrostActive && trackedLegendary === selectedLegendary;
+  const tracking = bifrostActive && trackedLegendary === selectedLegendary && trackedRecipe === selectedRecipe;
+  const routes = bifrostCatalog?.routes || [];
+  $('project-recipe-control').hidden = routes.length < 2;
+  $('project-recipe').replaceChildren(...routes.map(route => new Option(route.label, String(route.id))));
+  $('project-recipe').value = String(selectedRecipe);
   $('project-track').textContent = tracking ? 'Stop tracking' : 'Track';
   $('project-track').setAttribute('aria-pressed', String(tracking));
 }
@@ -77,10 +83,11 @@ async function loadCollectionProgress() {
   } finally { finish(); if (!signal.aborted) { $('legendary-refresh').disabled = false; collectionController = null; renderLegendaryLibrary(); } }
 }
 
-async function selectLegendary(id) {
+async function selectLegendary(id, route = 0) {
   selectionController?.abort(); bifrostController?.abort();
   selectionController = new AbortController(); const signal = selectionController.signal;
   selectedLegendary = id; bifrostCatalog = null; bifrostProgress = null;
+  selectedRecipe = route;
   $('selected-project').hidden = false;
   updateProjectHeading(); renderLegendaryLibrary();
   $('selected-project').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
@@ -88,17 +95,17 @@ async function selectLegendary(id) {
   $('project-status').textContent = 'Loading this legendary’s recipe requirements…';
   const finish = showLookupLoading($('project-results'), 'Loading legendary requirements', signal);
   try {
-    const catalog = await api(id === 30698 ? '/bifrost.json' : `/api/project-definition?id=${id}`, signal, 60000);
+    const catalog = await api(id === 30698 ? '/bifrost.json' : `/api/project-definition?id=${id}&route=${route}`, signal, 60000);
     if (signal.aborted) return;
     bifrostCatalog = catalog;
-    if (bifrostActive && trackedLegendary === id) trackedCatalog = bifrostCatalog;
+    if (bifrostActive && trackedLegendary === id && trackedRecipe === route) trackedCatalog = bifrostCatalog;
     updateProjectHeading();
     $('project-track').disabled = false;
     finish();
     await refreshBifrost();
   } catch (error) {
     if (!signal.aborted) {
-      const retry = element('button', 'uses-retry', 'Retry project'); retry.onclick = () => selectLegendary(id);
+      const retry = element('button', 'uses-retry', 'Retry project'); retry.onclick = () => selectLegendary(id, route);
       $('project-results').replaceChildren(element('p', 'lookup-error', error.message), retry);
       $('project-status').textContent = 'This project could not load. Retry or select another legendary.';
     }
@@ -477,14 +484,14 @@ async function refreshBifrost() {
   const finish = showLookupLoading($('project-results'), 'Counting gifts and materials across your account', signal);
   render();
   try {
-    const data = await api(`/api/projects/bifrost?id=${selectedLegendary}`, signal, 60000);
+    const data = await api(`/api/projects/bifrost?id=${selectedLegendary}&route=${selectedRecipe}`, signal, 60000);
     if (signal.aborted) return;
     bifrostProgress = data;
     if (data.catalog) bifrostCatalog = data.catalog;
-    if (bifrostActive && trackedLegendary === selectedLegendary) { trackedProgress = data; trackedCatalog = bifrostCatalog; }
+    if (bifrostActive && trackedLegendary === selectedLegendary && trackedRecipe === selectedRecipe) { trackedProgress = data; trackedCatalog = bifrostCatalog; }
     updateProjectHeading(); renderLegendaryLibrary();
     renderBifrost(data);
-    $('project-status').textContent = bifrostActive && trackedLegendary === selectedLegendary ? `Tracking ${projectName()}. Needed item types are protected in inventory, including surplus copies; review quantities here.` : 'Preview only. Track this project to protect its materials in inventory.';
+    $('project-status').textContent = bifrostActive && trackedLegendary === selectedLegendary && trackedRecipe === selectedRecipe ? `Tracking ${projectName()}. Needed item types are protected in inventory, including surplus copies; review quantities here.` : 'Preview only. Track this recipe to protect its materials in inventory.';
     render();
     if ($('item-dialog').open && selectedItem) renderCleanupDetails(selectedItem.item, selectedItem.slot);
   } catch (error) {
@@ -500,6 +507,8 @@ async function refreshBifrost() {
 async function initProjects() {
   try { bifrostActive = localStorage.getItem(bifrostPreference) === 'true'; } catch { /* Optional preference. */ }
   try { trackedLegendary = Number(localStorage.getItem('quaggansHoard.trackedLegendary')) || 30698; } catch {}
+  try { trackedRecipe = Number(localStorage.getItem('quaggansHoard.trackedRecipe')) || 0; } catch {}
+  $('project-recipe').onchange = () => selectLegendary(selectedLegendary, Number($('project-recipe').value));
   const updateTrackButton = updateProjectHeading;
   $('legendary-search').oninput = renderLegendaryLibrary;
   $('legendary-type').onchange = updateLegendaryCategories;
@@ -512,9 +521,11 @@ async function initProjects() {
   $('project-refresh').onclick = refreshBifrost;
   $('project-track').onclick = () => {
     try {
-      const active = !(bifrostActive && trackedLegendary === selectedLegendary);
+      const active = !(bifrostActive && trackedLegendary === selectedLegendary && trackedRecipe === selectedRecipe);
       localStorage.setItem(bifrostPreference, String(active));
       localStorage.setItem('quaggansHoard.trackedLegendary', String(selectedLegendary));
+      localStorage.setItem('quaggansHoard.trackedRecipe', String(selectedRecipe));
+      trackedRecipe = selectedRecipe;
       bifrostActive = active; trackedLegendary = selectedLegendary;
       trackedCatalog = bifrostCatalog; trackedProgress = bifrostProgress;
       window.persistDesktopPreferences?.();
@@ -526,8 +537,9 @@ async function initProjects() {
   try {
     if (bifrostActive) {
       const id = trackedLegendary;
-      const catalog = await api(id === 30698 ? '/bifrost.json' : `/api/project-definition?id=${id}`, undefined, 60000);
-      if (bifrostActive && trackedLegendary === id) trackedCatalog = catalog;
+      const route = trackedRecipe;
+      const catalog = await api(id === 30698 ? '/bifrost.json' : `/api/project-definition?id=${id}&route=${route}`, undefined, 60000);
+      if (bifrostActive && trackedLegendary === id && trackedRecipe === route) trackedCatalog = catalog;
     }
     render();
   } catch {

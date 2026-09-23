@@ -71,6 +71,8 @@ def progress(key, fetch, catalog=CATALOG):
             if warning:
                 warnings.append(warning)
             for slot in slots:
+                if label == 'Legendary Armory' and slot['id'] != catalog['root']:
+                    continue  # Ownership is not a consumable crafting ingredient.
                 holdings[slot['id']] += slot['count']
                 if slot['count']:
                     locations[slot['id']].append({'location': label, 'count': slot['count']})

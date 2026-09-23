@@ -123,7 +123,9 @@ class Handler(BaseHTTPRequestHandler):
             if url.path == '/api/project-definition':
                 raw_id = parse_qs(url.query).get('id', [''])[0]
                 if not raw_id.isascii() or not raw_id.isdigit(): raise ApiError('Choose a valid legendary.', 400)
-                self.send(200, json.dumps(legendary_catalog.definition(int(raw_id), gw2)).encode(), 'application/json')
+                raw_route = parse_qs(url.query).get('route', ['0'])[0]
+                if not raw_route.isascii() or not raw_route.isdigit() or int(raw_route) >= 32: raise ApiError('Choose a valid recipe route.', 400)
+                self.send(200, json.dumps(legendary_catalog.definition(int(raw_id), gw2, int(raw_route))).encode(), 'application/json')
                 return
             if url.path == '/bifrost.json':
                 self.send(200, json.dumps(legendary.CATALOG).encode(), 'application/json')
@@ -168,7 +170,9 @@ class Handler(BaseHTTPRequestHandler):
             elif url.path == '/api/projects/bifrost':
                 raw_id = parse_qs(url.query).get('id', [str(legendary.CATALOG['root'])])[0]
                 if not raw_id.isascii() or not raw_id.isdigit(): raise ApiError('Choose a valid legendary.', 400)
-                data = legendary.progress(key, gw2, legendary_catalog.definition(int(raw_id), gw2))
+                raw_route = parse_qs(url.query).get('route', ['0'])[0]
+                if not raw_route.isascii() or not raw_route.isdigit() or int(raw_route) >= 32: raise ApiError('Choose a valid recipe route.', 400)
+                data = legendary.progress(key, gw2, legendary_catalog.definition(int(raw_id), gw2, int(raw_route)))
             elif url.path == '/api/item-locations':
                 raw_id = parse_qs(url.query).get('id', [''])[0]
                 if not (raw_id.isascii() and raw_id.isdigit() and 0 < int(raw_id) < 2147483648):

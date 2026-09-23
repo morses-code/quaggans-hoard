@@ -82,37 +82,46 @@ def collection_progress(key, fetch):
     return {'items': results, 'warnings': warnings, 'checked_at': datetime.now(timezone.utc).isoformat()}
 
 
-def recipe_parts(text):
-    """Only one explicit, deterministic, single-output acquisition recipe."""
+def recipe_options(text):
+    """Explicit, deterministic, single-output acquisition recipes."""
     section = re.search(r'^==\s*Acquisition\s*==\s*$(.*?)(?=^==[^=]|\Z)', text, re.M | re.S | re.I)
     if not section:
         return []
     recipes = re.findall(r'\{\{recipe\s*\n(.*?)\}\}', section[1], re.S | re.I)
-    if len(recipes) != 1 or '{{' in recipes[0]:
-        return []
-    fields = dict((k.strip().lower(), v.strip()) for k, v in re.findall(r'^\s*\|\s*([^=\n]+)=(.*)$', recipes[0], re.M))
-    if fields.get('quantity', '1') != '1' or fields.get('source', '').lower() != 'mystic forge':
-        return []
-    if any(word in recipes[0].lower() for word in ('chance', 'random', '%', 'output', 'requires')):
-        return []
-    parts = []
-    for field, value in fields.items():
-        if field.startswith('ingredient'):
-            if not re.fullmatch(r'ingredient\d+', field): return []
-            match = re.fullmatch(r'([1-9]\d*)\s+([^{}|<>\n]+)', value)
-            if not match: return []
-            parts.append({'count': int(match[1]), 'name': match[2].strip()})
-    return parts if 1 <= len(parts) <= 4 else []
+    options = []
+    for recipe in recipes:
+        if '{{' in recipe: return []
+        fields = dict((k.strip().lower(), v.strip()) for k, v in re.findall(r'^\s*\|\s*([^=\n]+)=(.*)$', recipe, re.M))
+        if fields.get('quantity', '1') != '1' or fields.get('source', '').lower() != 'mystic forge': return []
+        if any(word in recipe.lower() for word in ('chance', 'random', '%', 'output', 'requires')): return []
+        parts = []
+        for field, value in fields.items():
+            if field.startswith('ingredient'):
+                if not re.fullmatch(r'ingredient\d+', field): return []
+                match = re.fullmatch(r'([1-9]\d*)\s+([^{}|<>\n]+)', value)
+                if not match: return []
+                parts.append({'count': int(match[1]), 'name': match[2].strip()})
+        if not 1 <= len(parts) <= 4: return []
+        if parts not in options: options.append(parts)
+    return options
 
 
-def definition(item_id, fetch):
+def recipe_parts(text):
+    options = recipe_options(text)
+    return options[0] if len(options) == 1 else []
+
+
+def definition(item_id, fetch, route=0):
+    if not 0 <= route < 32: raise ValueError('Choose a valid recipe route.')
     if item_id == legendary.CATALOG['root']:
+        if route: raise ValueError('Choose a valid recipe route.')
         return legendary.CATALOG
     if item_id not in {row['id'] for row in catalogue(fetch)}:
         raise ValueError('Choose an item from the legendary catalogue.')
 
     def read():
         nodes = {}
+        routes = []
         deadline = time.monotonic() + 35
         def api_item(item_id):
             return wiki.cached(('project-item', item_id), lambda: fetch('/items/' + str(item_id)))
@@ -130,12 +139,21 @@ def definition(item_id, fetch):
                     'ingredients': [], 'note': 'Obtain this item directly; its crafting steps are not expanded. Open acquisition details for methods and requirements.'}
             nodes[str(item_id)] = node
             # Tradable materials/precursors are acquisition targets, not assumed crafting routes.
-            if depth >= 3 or len(nodes) >= 48 or time.monotonic() >= deadline or (depth and not {'AccountBound', 'SoulbindOnAcquire'}.intersection(item.get('flags', []))):
+            if depth >= 3 or len(nodes) >= 48 or time.monotonic() >= deadline or (depth and item.get('rarity') != 'Legendary' and not {'AccountBound', 'SoulbindOnAcquire'}.intersection(item.get('flags', []))):
                 return
             try:
                 page = wiki.page(item['name'])
                 if item_id not in wiki.item_ids(page['wikitext']['*']): return
-                parts = recipe_parts(page['wikitext']['*'])
+                options = recipe_options(page['wikitext']['*'])
+                if depth == 0 and options:
+                    routes.extend({'id': i, 'label': ' + '.join(f"{p['count']} {p['name']}" for p in option)} for i, option in enumerate(options))
+                    if route >= len(options): raise ValueError('Unknown recipe route')
+                    parts = options[route]
+                else:
+                    if len(options) > 1:
+                        node['note'] = 'Multiple crafting recipes are available. Open this legendary separately to choose its recipe, or obtain this component directly.'
+                        return
+                    parts = options[0] if options else []
                 def resolve(part):
                     ids = wiki.item_ids(wiki.page(part['name'])['wikitext']['*'])
                     if len(ids) != 1: raise ValueError('Ambiguous ingredient')
@@ -149,19 +167,27 @@ def definition(item_id, fetch):
                     recipe_ids = wiki.cached(('project-recipes', item_id), lambda: fetch('/recipes/search?output=' + str(item_id)))
                     if not recipe_ids or len(recipe_ids) > 12: return
                     recipes = wiki.cached(('project-recipe-details', item_id), lambda: fetch('/recipes?ids=' + ','.join(map(str, recipe_ids))))
-                    routes = set()
+                    api_routes = set()
                     for recipe in recipes:
                         if recipe.get('output_item_id') != item_id or recipe.get('output_item_count') != 1: return
                         if recipe.get('guild_ingredients') or any(p.get('type', 'Item') != 'Item' for p in recipe['ingredients']): return
-                        routes.add(tuple(sorted((p.get('item_id', p.get('id')), p['count']) for p in recipe['ingredients'])))
-                    if len(routes) != 1: return
-                    ingredients = [{'id': i, 'count': count} for i, count in routes.pop()]
+                        api_routes.add(tuple(sorted((p.get('item_id', p.get('id')), p['count']) for p in recipe['ingredients'])))
+                    api_routes = sorted(api_routes)
+                    if depth == 0:
+                        routes.extend({'id': index, 'label': ' + '.join(f"{count} {api_item(i)['name']}" for i, count in parts)} for index, parts in enumerate(api_routes))
+                        if route >= len(api_routes): return
+                    elif len(api_routes) != 1:
+                        node['note'] = 'Multiple crafting recipes are available; this component remains a direct acquisition target.'
+                        return
+                    ingredients = [{'id': i, 'count': count} for i, count in api_routes[route if depth == 0 else 0]]
                     if not ingredients or any(not p['id'] or p['id'] in path or p['id'] == item_id or p['count'] <= 0 for p in ingredients): return
                 for part in ingredients: add(part['id'], depth + 1, path | {item_id})
                 node.update(ingredients=ingredients, note='Recipe imported from public game data. Check unlocks and crafting requirements in game.', revision=page['revid'])
             except Exception:
                 return  # Unverified steps remain explicit acquisition targets.
         add(item_id, 0, set())
+        if route and (not routes or route >= len(routes)): raise ValueError('Choose a valid recipe route.')
         return {'root': item_id, 'name': nodes[str(item_id)]['name'], 'nodes': nodes,
-                'scope': 'Verified single-output recipes only. Alternative routes, currency recipes, precursor crafting and deeper steps may remain acquisition targets.'}
-    return wiki.cached(('legendary-definition', item_id), read)
+                'routes': routes, 'selected_route': route,
+                'scope': 'Progress applies to the selected recipe. Armory weapons cannot be spent as ingredients. Unexpanded subrecipes remain acquisition targets.'}
+    return wiki.cached(('legendary-definition', item_id, route), read)
