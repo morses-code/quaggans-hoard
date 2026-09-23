@@ -128,7 +128,7 @@ and progress separate. Track remembers the selected recipe. Legendary Armory
 ownership counts for the final item only, never as a spendable ingredient.
 Imports are bounded in depth and time. Unexpanded steps remain acquisition targets,
 and unsupported roots offer acquisition information without a fabricated recipe
-percentage. Public catalogue and recipe data are cached for six hours.
+percentage. Public catalogue and recipe data are cached in memory for up to 24 hours.
 
 Selected-project requirement coverage weights each recipe branch equally and
 accounts for partial stacks; it is distinct from collection progress. Owned gifts
@@ -147,7 +147,7 @@ Expand any missing material, or “How to obtain this item” in an inventory it
 to load its acquisition and notes sections from the GW2 Wiki. This uses a generic
 parser, not an item-specific list of methods, vendors or prices. Wiki item IDs must
 match the selected API item. Unmatched pages and failed requests offer a retry.
-Public results are cached in memory for six hours, with revision and attribution.
+Public results are cached in memory for 24 hours, with revision and attribution.
 Text and tables are imported safely without running wiki HTML. Unrecognized costs
 remain readable but receive no affordability estimate. The Bifrost recipe tree
 itself remains the reviewed definition in bifrost.json.
@@ -161,3 +161,18 @@ independently, and full-shortfall costs can span multiple weekly/seasonal resets
 The resource-supported quantity is capped by the listed purchase limit, but past
 purchases, vendor access, unlocks and seasonal availability are not verified. No
 trade is executed and no vendor currency is actually reserved or spent.
+
+### Daily application caching
+
+Successful game API responses and public wiki data are reused for up to 24 hours
+from retrieval (not a midnight reset). Expired data reloads on the next request.
+The cache is bounded and lives only in memory; closing the server/desktop app
+clears it. Account snapshots are isolated by a digest of the API key and never
+saved to disk. Failed API requests are not cached, and connecting a key always
+validates it live. Simultaneous identical API requests share one lookup.
+
+**Update data now** and the inventory/project refresh buttons clear the current
+account and public caches, then reload the visible data. Other accounts' cached
+snapshots are unaffected. Refresh after moving items, crafting or unlocking a
+collection; cached disposal/progress advice can otherwise reflect older data.
+Wiki failure notices briefly retry after 60 seconds; manual refresh clears these too.

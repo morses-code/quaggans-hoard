@@ -243,7 +243,7 @@ function acquisitionTextCard(text, title) {
 
 function wikiAcquisitionView(entry, row, snapshot) {
   const view = element('div', 'wiki-acquisition');
-  view.append(element('p', 'evidence', `GW2 Wiki revision ${entry.revision} · retrieved ${new Date(entry.checked_at).toLocaleString()}. Public results cached up to 6 hours.`));
+  view.append(element('p', 'evidence', `GW2 Wiki revision ${entry.revision} · retrieved ${new Date(entry.checked_at).toLocaleString()}. Public results cached up to 24 hours.`));
   if (snapshot && entry.offers.length) {
     const budgets = element('details', 'wiki-source-section');
     budgets.append(element('summary', '', `Compare vendor costs with my storage (${entry.offers.length} offers)`), acquisitionPanel(row, budgetWikiOffers(entry, row, snapshot)));
@@ -524,12 +524,12 @@ async function initProjects() {
   $('legendary-search').oninput = renderLegendaryLibrary;
   $('legendary-type').onchange = updateLegendaryCategories;
   $('legendary-subtype').onchange = renderLegendaryLibrary;
-  $('legendary-refresh').onclick = loadCollectionProgress;
+  $('legendary-refresh').onclick = updateApplicationData;
   loadLegendaryLibrary();
   updateTrackButton();
   $('inventory-tab').onclick = () => showAppView(false);
   $('projects-tab').onclick = () => showAppView(true);
-  $('project-refresh').onclick = refreshBifrost;
+  $('project-refresh').onclick = updateApplicationData;
   $('project-track').onclick = () => {
     try {
       const active = !(bifrostActive && trackedLegendary === selectedLegendary && trackedRecipe === selectedRecipe);

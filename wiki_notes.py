@@ -130,7 +130,7 @@ def lookup(item_id, name):
             with urlopen(request, timeout=12) as response:
                 data = json.load(response)
         result = parse_page(item_id, data)
-        ttl = 21600
+        ttl = 86400
     except Exception:
         result = {'state': 'unavailable', 'notes': [], 'message': 'Wiki Notes could not be checked. No disposal approval was inferred.',
                   'source': 'https://wiki.guildwars2.com/wiki/' + quote(name.replace(' ', '_'), safe='') + '#Notes'}

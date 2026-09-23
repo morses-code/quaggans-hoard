@@ -224,6 +224,8 @@ async function smoke() {
   await loadInventory();
   expect($('space-filter').value === 'all', 'refresh clears space filter');
   expect(Object.keys(cleanupResults).length === 0, 'refresh must clear advice');
+  await updateApplicationData();
+  expect(!$('refresh-data').disabled && $('cache-notice-text').textContent.includes('Cache refreshed'), 'manual cache refresh completes and reloads the view');
   document.body.dataset.smoke = 'passed';
   await fetch('/__smoke?result=passed');
 }
@@ -234,6 +236,12 @@ outcome = []
 
 
 class FixtureHandler(server.Handler):
+    def do_POST(self):
+        if self.path == '/api/refresh':
+            self.send(200, b'{"ok":true}', 'application/json')
+            return
+        super().do_POST()
+
     def do_GET(self):
         path = self.path.split('?')[0]
         if path == '/__smoke':

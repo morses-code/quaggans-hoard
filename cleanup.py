@@ -14,7 +14,7 @@ RULES = json.loads((Path(__file__).parent / 'cleanup_rules.json').read_text(enco
 _catalog = None
 _catalog_at = 0
 _lock = Lock()
-MAX_AGE = 3600
+MAX_AGE = 86400
 COLLECTION_ONLY = 'This item only has value as part of a collection.'
 COMMUNITY_SOURCE = 'https://github.com/zwei2stein/gw2stacks/blob/main/data/model.py'
 

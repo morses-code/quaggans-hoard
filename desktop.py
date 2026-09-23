@@ -50,6 +50,7 @@ class DesktopState:
         with self.lock:
             if self.vault.get_password(SERVICE, 'GW2_API_KEY') is not None:
                 self.vault.delete_password(SERVICE, 'GW2_API_KEY')
+            server.GAME_CACHE.clear(server.account_partition(self.key))
             self.key = ''
 
     def save_preferences(self, values):
@@ -114,6 +115,9 @@ def create_server(state):
         def do_POST(self):
             if not self.allowed() or self.headers.get('Content-Type') != 'application/json':
                 self.send(403, b'{"error":"Request not allowed."}', 'application/json')
+                return
+            if self.path == '/api/refresh':
+                super().do_POST()
                 return
             try:
                 length = int(self.headers.get('Content-Length', '0'))

@@ -8,24 +8,17 @@ from html.parser import HTMLParser
 from threading import BoundedSemaphore, Lock
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
+from app_cache import DailyCache
 
 WIKI = 'https://wiki.guildwars2.com'
-_cache = {}
+DATA_CACHE = DailyCache(512)
+_cache = DATA_CACHE.entries
 _lock = Lock()
 _slots = BoundedSemaphore(2)
 
 
 def cached(key, read):
-    with _lock:
-        hit = _cache.get(key)
-        if hit and hit[0] > time.monotonic():
-            return hit[1]
-    value = read()  # Failures are retryable; never cache account data.
-    with _lock:
-        if len(_cache) >= 512:
-            _cache.clear()
-        _cache[key] = (time.monotonic() + 21600, value)
-    return value
+    return DATA_CACHE.get(key, read)
 
 
 def page(title):

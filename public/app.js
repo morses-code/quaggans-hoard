@@ -2,6 +2,40 @@ const $ = (id) => document.getElementById(id);
 let current = null;
 let controller;
 let charactersLoaded = false;
+let dataRefreshPromise;
+
+async function updateApplicationData() {
+  if (dataRefreshPromise) return dataRefreshPromise;
+  dataRefreshPromise = (async () => {
+    const preferred = $('character').value;
+    const selected = selectedLegendary;
+    const route = selectedRecipe;
+    const projects = !$('projects-view').hidden;
+    $('refresh-data').disabled = true;
+    $('cache-notice-text').textContent = 'Updating data from the game API and wiki…';
+    controller?.abort(); cleanupController?.abort(); usesController?.abort(); locationsController?.abort();
+    collectionController?.abort(); selectionController?.abort(); bifrostController?.abort(); itemAcquisitionController?.abort();
+    $('item-dialog').close();
+    try {
+      await api('/api/refresh', undefined, 60000, {method: 'POST', headers: {'Content-Type': 'application/json'}});
+      collectionProgress = null; collectionController = null; bifrostProgress = null; bifrostCatalog = null;
+      trackedProgress = null; trackedCatalog = null;
+      if (bifrostActive) {
+        trackedCatalog = await api(trackedLegendary === 30698 ? '/bifrost.json' : `/api/project-definition?id=${trackedLegendary}&route=${trackedRecipe}`, undefined, 60000);
+      }
+      await loadCharacters(preferred);
+      await loadLegendaryLibrary();
+      if (projects) {
+        await loadCollectionProgress();
+        if (selected) await selectLegendary(selected, route);
+      } else { selectedLegendary = 0; $('selected-project').hidden = true; }
+      $('cache-notice-text').textContent = 'Cache refreshed. Data is reused for up to 24 hours; failed lookups can be retried.';
+    } catch (error) {
+      $('cache-notice-text').textContent = error.message + ' Use Update data now to retry.';
+    } finally { $('refresh-data').disabled = false; }
+  })();
+  try { await dataRefreshPromise; } finally { dataRefreshPromise = null; }
+}
 const defaultCharacterKey = 'tyria.defaultCharacter';
 let defaultCharacter = '';
 try { defaultCharacter = localStorage.getItem(defaultCharacterKey) || ''; } catch { /* Storage may be blocked. */ }
@@ -105,7 +139,7 @@ function element(tag, className, text) {
   return node;
 }
 
-async function api(path, signal, timeoutMs = 0) {
+async function api(path, signal, timeoutMs = 0, options = {}) {
   const request = new AbortController();
   const cancel = () => request.abort();
   let timedOut = false;
@@ -113,7 +147,7 @@ async function api(path, signal, timeoutMs = 0) {
   signal?.addEventListener('abort', cancel, {once: true});
   const timer = timeoutMs ? setTimeout(() => { timedOut = true; request.abort(); }, timeoutMs) : null;
   try {
-    const response = await fetch(path, { signal: request.signal });
+    const response = await fetch(path, {...options, signal: request.signal});
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Request failed. Please retry.');
     return data;
@@ -642,7 +676,7 @@ async function loadInventory(options = {}) {
   }
 }
 
-async function loadCharacters() {
+async function loadCharacters(preferredCharacter = '') {
   $('refresh').disabled = true;
   $('status').textContent = 'Loading your characters…';
   try {
@@ -650,7 +684,8 @@ async function loadCharacters() {
     $('character').replaceChildren();
     names.sort((a, b) => a.localeCompare(b)).forEach(name => $('character').append(new Option(name, name)));
     charactersLoaded = names.length > 0;
-    if (names.includes(defaultCharacter)) $('character').value = defaultCharacter;
+    if (names.includes(preferredCharacter)) $('character').value = preferredCharacter;
+    else if (names.includes(defaultCharacter)) $('character').value = defaultCharacter;
     updateDefaultCharacterButton();
     $('character').disabled = !charactersLoaded;
     $('refresh').textContent = 'Refresh';
@@ -752,6 +787,7 @@ itemDialog.addEventListener('close', () => {
 });
 $('hero-art').addEventListener('error', () => { $('hero-art').hidden = true; $('art-caption').hidden = true; });
 $('profession-icon').addEventListener('error', () => { $('profession-icon').hidden = true; $('profession-fallback').hidden = false; });
-$('refresh').addEventListener('click', () => charactersLoaded ? loadInventory() : loadCharacters());
+$('refresh').addEventListener('click', updateApplicationData);
+$('refresh-data').addEventListener('click', updateApplicationData);
 initProjects();
 if (window.desktopConnected !== false) loadCharacters();

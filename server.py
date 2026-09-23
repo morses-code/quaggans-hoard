@@ -2,6 +2,9 @@
 import json
 import os
 import logging
+import hashlib
+from datetime import datetime, timezone
+from app_cache import DailyCache
 import cleanup
 import item_uses
 import item_locations
@@ -21,6 +24,23 @@ API = "https://api.guildwars2.com/v2"
 ART_PROFESSIONS = {'guardian', 'elementalist', 'engineer', 'mesmer', 'necromancer', 'ranger', 'thief', 'warrior'}
 CLIENT_DISCONNECTS = (BrokenPipeError, ConnectionResetError, ConnectionAbortedError)
 LOGGER = logging.getLogger(__name__)
+GAME_CACHE = DailyCache()
+
+
+def account_partition(key):
+    return hashlib.sha256(key.encode()).hexdigest() if key else 'public'
+
+
+def refresh_cache(key):
+    GAME_CACHE.clear(account_partition(key))
+    GAME_CACHE.clear('public')
+    wiki_acquisition.DATA_CACHE.clear()
+    with wiki_notes._lock:
+        wiki_notes._cache.clear()
+    with item_uses._recipe_lock:
+        item_uses._recipe_ids.clear()
+    with cleanup._lock:
+        cleanup._catalog = None
 
 
 def load_key():
@@ -40,6 +60,12 @@ class ApiError(Exception):
 
 
 def gw2(path, key=None):
+    if path == '/tokeninfo':
+        return fetch_gw2(path, key)  # Connecting always validates the live key.
+    return GAME_CACHE.get((account_partition(key), path), lambda: fetch_gw2(path, key))
+
+
+def fetch_gw2(path, key=None):
     headers = {"Accept": "application/json", "User-Agent": "LocalGW2Inventory/1.0"}
     if key:
         headers["Authorization"] = "Bearer " + key
@@ -79,6 +105,18 @@ def inventory(name, key):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        host = self.headers.get('Host', '')
+        allowed = {f'127.0.0.1:{self.server.server_port}', f'localhost:{self.server.server_port}'}
+        if self.path != '/api/refresh' or host not in allowed or self.headers.get('Origin') not in (None, 'http://' + host) or self.headers.get('Content-Type') != 'application/json':
+            self.send(403, b'{"error":"Request not allowed."}', 'application/json')
+            return
+        try:
+            refresh_cache(self.get_key())
+            self.send(200, b'{"ok":true}', 'application/json')
+        except ApiError as error:
+            self.send(error.status, json.dumps({'error': str(error)}).encode(), 'application/json')
+
     def get_key(self):
         return load_key()
 
@@ -222,6 +260,10 @@ class Handler(BaseHTTPRequestHandler):
                 if not name or len(name) > 100:
                     raise ApiError("Choose a valid character.", 400)
                 data = inventory(name, key)
+            if isinstance(data, dict) and 'checked_at' in data:
+                stamp = GAME_CACHE.oldest(account_partition(key))
+                if stamp:
+                    data['checked_at'] = datetime.fromtimestamp(stamp, timezone.utc).isoformat()
             self.send(200, json.dumps(data).encode(), "application/json")
         except ApiError as error:
             self.send(error.status, json.dumps({"error": str(error)}).encode(), "application/json")

@@ -13,7 +13,7 @@ _recipe_slots = BoundedSemaphore(4)
 def recipe_ids(item_id, fetch):
     with _recipe_lock:
         cached = _recipe_ids.get(item_id)
-        if cached and time.monotonic() - cached[0] < 3600:
+        if cached and time.monotonic() - cached[0] < 86400:
             return cached[1]
     with _recipe_slots:
         ids = sorted(set(fetch(f'/recipes/search?input={item_id}')))
