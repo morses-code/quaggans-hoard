@@ -16,7 +16,10 @@ PROJECT_WALLET = {23: 100, 7: 1500, 15: 100, 26: 100, 28: 300, 63: 600, 1: 10000
 CATALOG_FIXTURE = json.loads(Path(__file__).with_name('acquisition_fixture.json').read_text(encoding='utf-8'))
 WIKI_FIXTURE = {'id': 19675, 'name': 'Mystic Clover', 'revision': 123, 'checked_at': '2026-09-23T10:00:00Z',
     'source': 'https://wiki.guildwars2.com/wiki/Mystic_Clover', 'unparsed_offers': 0,
-    'sections': [{'title': 'Reward tracks', 'blocks': [{'kind': 'table', 'rows': [['Track', 'Quantity'], ['Example track', '2']]}]}],
+    'sections': [
+        {'title': 'Reward tracks', 'blocks': [{'kind': 'table', 'rows': [['Track', 'Quantity', 'Repeatable', 'Game mode'], ['Example track', '2', 'Yes', 'PvP, WvW'], ['Second reward track', '7', 'No', 'WvW']]}]},
+        {'title': 'Gathered from', 'blocks': [{'kind': 'table', 'rows': [['Source', 'Location', 'Requirement'], ['Example gathering node', 'Example region', 'Gathering tool required'], ['Example resource cache', 'Open world', 'Complete the event']]}]},
+        {'title': 'Notes', 'blocks': [{'kind': 'text', 'text': 'Rewards vary by track.\nCheck unlock requirements before starting a new track.'}]}],
     'offers': [{**offer, 'costs': [{**CATALOG_FIXTURE['resources'][cost['resource']], 'per_trade': cost['count']} for cost in offer['costs']]}
                for offer in CATALOG_FIXTURE['items']['19675']['offers']]}
 ADVICE = {'status': 'check', 'reason': 'Not disposal advice', 'collections': [],
@@ -67,7 +70,7 @@ async function smoke() {
   $('bags').querySelector('button.slot').click();
   expect($('item-dialog').open, 'item dialog');
   $('item-acquisition').open = true;
-  for (let i=0; i<100 && !$('item-acquisition').querySelector('.wiki-source-table'); i++) await new Promise(r => setTimeout(r, 20));
+  for (let i=0; i<100 && !$('item-acquisition').querySelector('.acquisition-source-card'); i++) await new Promise(r => setTimeout(r, 20));
   expect($('item-acquisition').textContent.includes('Example track'), 'generic inventory acquisition lookup');
   $('find-item').click();
   expect($('item-locations').querySelector('.spinner'), 'account lookup spinner visible');
@@ -165,7 +168,7 @@ async function smoke() {
   const clover = [...document.querySelectorAll('.material-card')].find(card => card.querySelector('strong').textContent === 'Mystic Clover');
   clover.open = true;
   for (let i=0; i<100 && !clover.textContent.includes('BUY-4373'); i++) await new Promise(r => setTimeout(r, 20));
-  expect(clover.querySelector('.wiki-source-table'), 'wiki acquisition table imported');
+  expect(clover.querySelector('.acquisition-source-card'), 'wiki acquisition table imported');
   expect($('project-results').textContent.includes('BUY-4373'), 'clover vendor options displayed');
   expect($('project-results').textContent.includes('250 reserved'), 'trade costs explain reserved ectoplasm');
   expect($('project-results').textContent.includes('Resources cover up to 5'), 'clover trade capacity shown');

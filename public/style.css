@@ -52,3 +52,31 @@ html{scrollbar-gutter:stable}html:has(#item-dialog[open]),body:has(#item-dialog[
 .wiki-source-table th, .wiki-source-table td { padding: 10px 12px; border-bottom: 1px solid #547b7844; text-align: left; vertical-align: top; min-width: 100px; max-width: 500px; }
 .wiki-source-table th { color: #24575a; background: #e6efe6; }
 .wiki-acquisition > .evidence { margin: 12px 0; }
+
+/* Acquisition sources share the vendor exchange card language. */
+.source-section-heading { display: flex; align-items: center; gap: 12px; list-style: none; }
+.source-section-label { flex: 1; font: 19px Georgia, serif; }
+.source-section-label small { display: block; margin-top: 6px; font: 10px 'Segoe UI', sans-serif; color: #718478; letter-spacing: .3px; }
+.source-section-content { padding-top: 16px; min-width: 0; }
+.acquisition-source-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; margin-bottom: 16px; }
+.acquisition-source-card { box-shadow: 0 3px 12px #17383d05; overflow-wrap: anywhere; }
+.acquisition-source-card .vendor-heading h4 { font: 18px/1.4 Georgia, serif; color: #365956; margin: 0; }
+.acquisition-source-card .source-card-kicker { color: #718478; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; margin: 0 0 10px; }
+.source-card-facts { margin: 14px 0 0; display: grid; gap: 0; }
+.source-card-fact { display: grid; grid-template-columns: minmax(75px, 1fr) minmax(0, 2fr); gap: 14px; border-top: 1px solid #dce5da; padding: 11px 0; align-items: baseline; }
+.source-card-fact dt { font-size: 10px; color: #718478; }
+.source-card-fact dd { margin: 0; color: #365956; font-size: 12px; line-height: 1.6; white-space: pre-line; }
+.acquisition-prose { margin-bottom: 14px; border-left: 3px solid #8ba99a; }
+.acquisition-prose .source-card-copy { margin: 0; font-size: 13px; line-height: 1.8; color: #49665b; }
+.source-card-list { padding: 0; margin: 0; list-style: none; }
+.source-card-list li { padding: 11px 0 11px 20px; border-top: 1px solid #dce5da; position: relative; font-size: 12px; line-height: 1.8; color: #49665b; }
+.source-card-list li:first-child { border-top: 0; padding-top: 0; }
+.source-card-list li:before { content: '\2022'; color: #8ba99a; position: absolute; left: 2px; }
+.acquisition-group-title { grid-column: 1 / -1; margin: 12px 0 0 !important; padding: 10px 12px; background: #e6eee3; border-left: 3px solid #8ba99a; font-size: 14px !important; line-height: 1.5 !important; }
+.source-section-content > a { display: inline-block; margin: 4px 0; font-size: 11px; }
+.wiki-source-section[open] > .source-section-heading { padding-bottom: 14px; border-bottom: 1px solid #d5dfd4; }
+@media(max-width:760px) { .source-section-label { font-size: 17px; } .source-card-fact { grid-template-columns: minmax(65px, 1fr) minmax(0, 2fr); gap: 10px; } .wiki-source-section { padding: 10px; } }
+.wiki-source-section > summary { display: flex; align-items: center; list-style: none; }
+.wiki-source-section > summary::-webkit-details-marker { display: none; }
+.wiki-source-section > summary:after { content: '+'; margin-left: auto; color: #63867c; font-size: 20px; }
+.wiki-source-section[open] > summary:after { content: '-'; }

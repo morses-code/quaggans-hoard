@@ -29,6 +29,62 @@ function budgetWikiOffers(entry, row, snapshot) {
   })};
 }
 
+// Turn regular wiki tables into labelled cards; keep complex headers as tables.
+function acquisitionCards(block, title) {
+  if (!block.rows.length || !block.rows[0].length || block.spans?.[0]?.some(cell => !cell.header)) return null;
+  const headers = block.rows[0].map(text => text.trim());
+  if (headers.some((text, i) => !text || (block.spans?.[0]?.[i]?.colspan || 1) !== 1 || (block.spans?.[0]?.[i]?.rowspan || 1) !== 1)) return null;
+  const grid = element('div', 'acquisition-source-grid');
+  const carried = [];
+  for (let r = 1; r < block.rows.length; r++) {
+    const cells = block.rows[r];
+    const spans = block.spans?.[r];
+    if (cells.length === 1 && spans?.[0]?.header && spans[0].colspan === headers.length) {
+      grid.append(element('h4', 'acquisition-group-title', cells[0].trim()));
+      continue;
+    }
+    if (spans?.some(span => span.header)) return null;
+    const values = Array(headers.length).fill('');
+    const occupied = Array(headers.length).fill(false);
+    carried.forEach((value, i) => { if (value?.remaining) { values[i] = value.text; occupied[i] = true; value.remaining--; } });
+    let column = 0;
+    for (let c = 0; c < cells.length; c++) {
+      while (column < values.length && occupied[column]) column++;
+      if (column >= headers.length || (spans?.[c]?.colspan || 1) !== 1) return null;
+      values[column] = cells[c].trim();
+      if ((spans?.[c]?.rowspan || 1) > 1) carried[column] = {text: values[column], remaining: spans[c].rowspan - 1};
+      column++;
+    }
+    const card = element('section', 'vendor-offer acquisition-source-card');
+    const heading = element('div', 'vendor-heading');
+    const name = values[0] || title;
+    heading.append(element('h4', '', name));
+    card.append(element('p', 'source-card-kicker', headers[0]), heading);
+    const facts = element('dl', 'source-card-facts');
+    values.slice(1).forEach((value, i) => {
+      if (!value.trim()) return;
+      const fact = element('div', 'source-card-fact');
+      fact.append(element('dt', '', headers[i + 1]), element('dd', '', value));
+      facts.append(fact);
+    });
+    card.append(facts);
+    grid.append(card);
+  }
+  return grid.childElementCount ? grid : null;
+}
+
+function acquisitionTextCard(text, title) {
+  const card = element('section', 'vendor-offer acquisition-source-card acquisition-prose');
+  card.append(element('p', 'source-card-kicker', title));
+  const lines = text.split(/\n+/).map(line => line.trim()).filter(Boolean);
+  if (lines.length > 1) {
+    const list = element('ul', 'source-card-list');
+    lines.forEach(line => list.append(element('li', '', line)));
+    card.append(list);
+  } else card.append(element('p', 'source-card-copy', text.trim()));
+  return card;
+}
+
 function wikiAcquisitionView(entry, row, snapshot) {
   const view = element('div', 'wiki-acquisition');
   view.append(element('p', 'evidence', `GW2 Wiki revision ${entry.revision} · retrieved ${new Date(entry.checked_at).toLocaleString()}. Public results cached up to 6 hours.`));
@@ -43,10 +99,17 @@ function wikiAcquisitionView(entry, row, snapshot) {
   for (const section of entry.sections) {
     const details = element('details', 'wiki-source-section');
     details.open = ['acquisition', 'overview', 'notes'].includes(section.title.toLowerCase());
-    details.append(element('summary', '', section.title));
+    const summary = element('summary', 'source-section-heading');
+    const label = element('span', 'source-section-label', section.title);
+    label.append(element('small', '', 'Sources, rewards & requirements'));
+    summary.append(label);
+    details.append(summary);
+    const content = element('div', 'source-section-content');
     for (const block of section.blocks) {
-      if (block.kind === 'text') details.append(element('p', '', block.text));
+      if (block.kind === 'text') content.append(acquisitionTextCard(block.text, section.title));
       else {
+        const cards = acquisitionCards(block, section.title);
+        if (cards) { content.append(cards); continue; }
         const scroll = element('div', 'project-table-scroll');
         scroll.tabIndex = 0;
         scroll.setAttribute('aria-label', section.title + ' table; scroll sideways for more columns');
@@ -61,9 +124,12 @@ function wikiAcquisitionView(entry, row, snapshot) {
           });
           table.append(tr);
         });
-        scroll.append(table); details.append(scroll);
+        scroll.classList.add('vendor-offer', 'acquisition-source-card');
+        scroll.append(table); content.append(scroll);
       }
     }
+    content.append(sourceLink('View this section on the wiki ↗', entry.source + '#' + encodeURIComponent(section.title.replaceAll(' ', '_'))));
+    details.append(content);
     view.append(details);
   }
   view.append(sourceLink('Source: Guild Wars 2 Wiki contributors', entry.source), document.createTextNode(' · '), sourceLink('GFDL licence', 'https://wiki.guildwars2.com/wiki/Guild_Wars_2_Wiki:Copyrights'));
