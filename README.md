@@ -143,7 +143,7 @@ Failed sources produce partial results. Refresh after crafting; game API data ca
 
 #### Acquisition tips and vendor budgets
 
-Expand any missing material, or “How to obtain this item” in an inventory item,
+Expand any missing material in a legendary project
 to load its acquisition and notes sections from the GW2 Wiki. This uses a generic
 parser, not an item-specific list of methods, vendors or prices. Wiki item IDs must
 match the selected API item. Unmatched pages and failed requests offer a retry.

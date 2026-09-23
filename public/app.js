@@ -14,7 +14,7 @@ async function updateApplicationData() {
     $('refresh-data').disabled = true;
     $('cache-notice-text').textContent = 'Updating data from the game API and wiki…';
     controller?.abort(); cleanupController?.abort(); usesController?.abort(); locationsController?.abort();
-    collectionController?.abort(); selectionController?.abort(); bifrostController?.abort(); itemAcquisitionController?.abort();
+    collectionController?.abort(); selectionController?.abort(); bifrostController?.abort();
     $('item-dialog').close();
     try {
       await api('/api/refresh', undefined, 60000, {method: 'POST', headers: {'Content-Type': 'application/json'}});
@@ -193,7 +193,6 @@ function descriptionText(value) {
 
 function showItem(item, slot) {
   selectedItem = { item, slot };
-  prepareItemAcquisition({...item, id: slot.id});
   $('detail-icon').hidden = !item.icon?.startsWith('https://render.guildwars2.com/');
   if (!$('detail-icon').hidden) $('detail-icon').src = item.icon;
   $('item-title').textContent = item.name;
@@ -779,7 +778,6 @@ itemDialog.addEventListener('click', event => {
   backdropPointerDown = false;
 });
 itemDialog.addEventListener('close', () => {
-  itemAcquisitionController?.abort();
   locationsController?.abort();
   backdropPointerDown = false;
   usesController?.abort();

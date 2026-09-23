@@ -3,7 +3,6 @@ let bifrostActive = false;
 let bifrostCatalog;
 let bifrostProgress;
 let bifrostController;
-let itemAcquisitionController;
 let legendaryItems = [];
 let selectedLegendary = 0;
 let trackedLegendary = 30698;
@@ -308,16 +307,6 @@ function acquisitionLookup(row, signal, snapshot) {
     } finally { finish(); }
   };
   return {panel, load};
-}
-
-function prepareItemAcquisition(item) {
-  itemAcquisitionController?.abort();
-  itemAcquisitionController = new AbortController();
-  const details = $('item-acquisition');
-  const lookup = acquisitionLookup(item, itemAcquisitionController.signal);
-  details.open = false;
-  details.replaceChildren(element('summary', '', 'How to obtain this item'), lookup.panel);
-  details.ontoggle = () => { if (details.open) { details.ontoggle = null; lookup.load(); } };
 }
 
 function neededForBifrost(id) {

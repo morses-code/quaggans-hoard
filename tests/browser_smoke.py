@@ -83,9 +83,7 @@ async function smoke() {
   expect($('bags').querySelectorAll('button.slot').length === 1, 'crafting filter');
   $('bags').querySelector('button.slot').click();
   expect($('item-dialog').open, 'item dialog');
-  $('item-acquisition').open = true;
-  for (let i=0; i<100 && !$('item-acquisition').querySelector('.acquisition-source-card'); i++) await new Promise(r => setTimeout(r, 20));
-  expect($('item-acquisition').textContent.includes('Example track'), 'generic inventory acquisition lookup');
+  expect(!document.getElementById('item-acquisition'), 'acquisition section removed from item modal');
   $('find-item').click();
   expect($('item-locations').querySelector('.spinner'), 'account lookup spinner visible');
   expect($('item-locations').getAttribute('aria-busy') === 'true', 'account lookup announces busy');
