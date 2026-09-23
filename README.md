@@ -102,28 +102,37 @@ https://wiki.guildwars2.com/wiki/API:2/account/inventory.
 Category, search, and Find space filters combine. Keep for me items appear
 under Keep rather than their original equipment/consumable/crafting category.
 
-### Legendary projects: The Bifrost
+### Legendary catalogue and projects
 
-Open Legendary projects to scan account holdings and expand the four final
-components. Track The Bifrost saves a local preference and protects required item
-types in inventory. Stop tracking restores the normal categories. Protection is
-conservative: it includes surplus copies of a required type, and protects the full
-recipe catalog until a complete account scan can narrow it down.
+Legendary projects opens a neutral, scrollable catalogue from the public Legendary
+Armory API. Search by name, filter equipment type, then choose a weapon/category.
+Rows show compact collection-progress bars and sort owned items first, followed
+by collection completion descending. Unlinked or unavailable progress appears as
+a dash, never as zero. Refresh progress rereads account achievements and armory.
 
-The reviewed recipe tree is in bifrost.json, with item IDs, wiki links/revisions
-and the review date. Crafting-station recipes were checked against API recipes
-4315 and 3165. Mystic Forge requirements are sourced from the linked wiki pages.
-Owned gifts replace their ingredient requirements. Shared ingredients are allocated
-once across the tree; the remaining-materials table combines repeated requirements.
-The progress bar measures final components owned, not time, gold or overall effort.
+Achievement links use explicit item rewards, matching named collection series and
+dedicated legendary categories. A direct "Legendary Weapon: <name>" collection
+supersedes optional precursor collections. This does not cover every armor set or
+acquisition route. Percentages measure objectives in linked collections, not total
+crafting cost; hovering a row shows which achievements contributed.
 
-The first version tracks one final Bifrost crafting path. It counts bags, bank,
-shared slots, material storage and Legendary Armory. It does not infer equipped
-items, unopened starter kits, precursor collection progress,
-recipe unlocks, crafting levels or reward-track/map-completion percentages. Those
-steps have source links and guidance. Clover gambling is not expanded into a
-fixed-cost recipe. Failed sources produce explicit partial results. Refresh after
-crafting in game; GW2 API data can lag. Account holdings are never saved to disk.
+Click an item to load its project below the list. Track protects the selected
+project's known required item types in inventory. Browsing another item leaves
+that protection in place until Track is clicked. The tracking preference persists
+in browser mode and Windows; account progress is not stored to disk.
+
+The Bifrost retains its reviewed recipe tree in bifrost.json. Other projects import
+unambiguous, single-output wiki Mystic Forge and public API crafting recipes.
+Imports are bounded in depth and time. Unexpanded steps remain acquisition targets,
+and unsupported roots offer acquisition information without a fabricated recipe
+percentage. Public catalogue and recipe data are cached for six hours.
+
+Selected-project requirement coverage weights each recipe branch equally and
+accounts for partial stacks; it is distinct from collection progress. Owned gifts
+replace their ingredients, and shared materials are allocated once. It counts bags,
+bank, shared slots, material storage and Legendary Armory. Equipped items, unopened
+containers, crafting unlocks and reward-track/map-completion steps are not inferred.
+Failed sources produce partial results. Refresh after crafting; game API data can lag.
 
 #### Acquisition tips and vendor budgets
 

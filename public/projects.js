@@ -4,6 +4,122 @@ let bifrostCatalog;
 let bifrostProgress;
 let bifrostController;
 let itemAcquisitionController;
+let legendaryItems = [];
+let selectedLegendary = 0;
+let trackedLegendary = 30698;
+let trackedCatalog;
+let trackedProgress;
+let selectionController;
+let collectionProgress;
+let collectionController;
+
+function projectName() { return bifrostCatalog?.name || legendaryItems.find(item => item.id === selectedLegendary)?.name || 'The Bifrost'; }
+function updateProjectHeading() {
+  $('project-title').textContent = projectName();
+  $('project-subtitle').textContent = 'Gather the requirements for your next legendary.';
+  const item = bifrostCatalog?.nodes[selectedLegendary] || legendaryItems.find(item => item.id === selectedLegendary);
+  $('project-icon').hidden = !item?.icon?.startsWith('https://render.guildwars2.com/');
+  if (!$('project-icon').hidden) $('project-icon').src = item.icon;
+  $('project-guide').href = item?.source || 'https://wiki.guildwars2.com/wiki/' + encodeURIComponent(projectName().replaceAll(' ', '_'));
+  const tracking = bifrostActive && trackedLegendary === selectedLegendary;
+  $('project-track').textContent = tracking ? 'Stop tracking' : 'Track';
+  $('project-track').setAttribute('aria-pressed', String(tracking));
+}
+
+function renderLegendaryLibrary() {
+  const grid = $('legendary-grid'); grid.replaceChildren();
+  const query = $('legendary-search').value.trim().toLowerCase();
+  const type = $('legendary-type').value;
+  const subtype = $('legendary-subtype').value;
+  const score = item => { const progress = collectionProgress?.items[item.id]; return progress?.owned ? 101 : progress?.percent ?? -1; };
+  const items = legendaryItems.filter(item => (!type || item.type === type) && (!subtype || item.subtype === subtype) && item.name.toLowerCase().includes(query)).sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name));
+  $('legendary-count').textContent = `${items.length} of ${legendaryItems.length} legendary items`;
+  for (const item of items) {
+    const card = element('button', 'legendary-choice'); card.type = 'button';
+    card.setAttribute('aria-pressed', String(item.id === selectedLegendary));
+    const text = element('span', 'legendary-choice-copy');
+    text.append(element('strong', '', item.name), element('small', '', [item.type, item.weight, item.subtype].filter(Boolean).join(' · ')));
+    const state = collectionProgress?.items[item.id];
+    const progress = element('span', 'legendary-collection-progress');
+    const label = state?.owned ? 'Owned' : state?.percent != null ? `${state.percent}%` : collectionController && !collectionProgress ? 'Checking' : '—';
+    progress.append(element('strong', '', label));
+    const meter = element('progress', 'legendary-collection-meter'); meter.max = 100; meter.value = state?.owned ? 100 : state?.percent || 0;
+    meter.setAttribute('aria-label', state?.owned ? 'Owned in Legendary Armory' : state?.percent != null ? `${state.current} of ${state.max} linked collection objectives completed` : 'Collection progress unavailable');
+    progress.append(meter);
+    card.title = state?.percent != null ? `${state.current} / ${state.max} objectives: ${state.achievements.map(a => a.name).join('; ')}` : 'No reliably linked collection progress is available for this item.';
+    card.append(projectIcon(item), text, progress);
+    card.onclick = () => selectLegendary(item.id);
+    grid.append(card);
+  }
+  if (!items.length) grid.append(element('p', '', 'No legendaries match your search.'));
+}
+
+function updateLegendaryCategories() {
+  const type = $('legendary-type').value;
+  $('legendary-subtype').replaceChildren(new Option(type === 'Weapon' ? 'All weapons' : 'All categories', ''));
+  [...new Set(legendaryItems.filter(item => !type || item.type === type).map(item => item.subtype).filter(Boolean))].sort().forEach(subtype => $('legendary-subtype').add(new Option(subtype.replace(/([a-z])([A-Z])/g, '$1 $2'), subtype)));
+  renderLegendaryLibrary();
+}
+
+async function loadCollectionProgress() {
+  collectionController?.abort(); collectionController = new AbortController();
+  const signal = collectionController.signal;
+  $('legendary-refresh').disabled = true;
+  const finish = showLookupLoading($('legendary-progress-status'), 'Checking legendary collections', signal);
+  try {
+    const data = await api('/api/legendary-progress', signal, 60000);
+    if (signal.aborted) return;
+    collectionProgress = data;
+    $('legendary-progress-status').replaceChildren(...data.warnings.map(warning => element('p', 'lookup-error', warning)));
+    renderLegendaryLibrary();
+  } catch (error) {
+    if (!signal.aborted) $('legendary-progress-status').replaceChildren(element('p', 'lookup-error', error.message + ' Use Refresh progress to retry.'));
+  } finally { finish(); if (!signal.aborted) { $('legendary-refresh').disabled = false; collectionController = null; renderLegendaryLibrary(); } }
+}
+
+async function selectLegendary(id) {
+  selectionController?.abort(); bifrostController?.abort();
+  selectionController = new AbortController(); const signal = selectionController.signal;
+  selectedLegendary = id; bifrostCatalog = null; bifrostProgress = null;
+  $('selected-project').hidden = false;
+  updateProjectHeading(); renderLegendaryLibrary();
+  $('selected-project').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
+  $('project-track').disabled = true; $('project-refresh').disabled = true;
+  $('project-status').textContent = 'Loading this legendary’s recipe requirements…';
+  const finish = showLookupLoading($('project-results'), 'Loading legendary requirements', signal);
+  try {
+    const catalog = await api(id === 30698 ? '/bifrost.json' : `/api/project-definition?id=${id}`, signal, 60000);
+    if (signal.aborted) return;
+    bifrostCatalog = catalog;
+    if (bifrostActive && trackedLegendary === id) trackedCatalog = bifrostCatalog;
+    updateProjectHeading();
+    $('project-track').disabled = false;
+    finish();
+    await refreshBifrost();
+  } catch (error) {
+    if (!signal.aborted) {
+      const retry = element('button', 'uses-retry', 'Retry project'); retry.onclick = () => selectLegendary(id);
+      $('project-results').replaceChildren(element('p', 'lookup-error', error.message), retry);
+      $('project-status').textContent = 'This project could not load. Retry or select another legendary.';
+    }
+  } finally { finish(); }
+}
+
+async function loadLegendaryLibrary() {
+  const panel = $('legendary-grid');
+  const controller = new AbortController();
+  const finish = showLookupLoading(panel, 'Loading legendary catalogue', controller.signal);
+  try {
+    const data = await api('/api/legendaries', controller.signal, 30000);
+    legendaryItems = data.items;
+    $('legendary-type').replaceChildren(new Option('All equipment', ''));
+    [...new Set(legendaryItems.map(item => item.type))].sort().forEach(type => $('legendary-type').add(new Option(type, type)));
+    updateLegendaryCategories();
+  } catch (error) {
+    const retry = element('button', 'uses-retry', 'Retry catalogue'); retry.onclick = loadLegendaryLibrary;
+    panel.replaceChildren(element('p', 'lookup-error', error.message), retry);
+  } finally { finish(); }
+}
 
 function budgetWikiOffers(entry, row, snapshot) {
   const reserved = {};
@@ -199,14 +315,16 @@ function prepareItemAcquisition(item) {
 
 function neededForBifrost(id) {
   if (!bifrostActive) return false;
-  if (!bifrostCatalog) return true; // Hold disposal guidance until requirements are known.
-  if (bifrostProgress?.complete_scan) return bifrostProgress.needed_ids.includes(Number(id));
-  return Number(id) !== bifrostCatalog.root && !!bifrostCatalog.nodes[String(id)];
+  const catalog = trackedCatalog;
+  if (!catalog) return true;
+  if (trackedProgress?.complete_scan) return trackedProgress.needed_ids.includes(Number(id));
+  return Number(id) !== catalog.root && !!catalog.nodes[String(id)];
 }
 
 function invalidateBifrost() {
   bifrostController?.abort();
   bifrostProgress = null;
+  trackedProgress = null;
   if (bifrostCatalog) {
     $('project-refresh').disabled = false;
     $('project-status').textContent = 'Inventory changed or refreshed. Refresh account progress to update this project.';
@@ -219,7 +337,8 @@ function showAppView(projects) {
   $('projects-view').hidden = !projects;
   $('inventory-tab').setAttribute('aria-pressed', String(!projects));
   $('projects-tab').setAttribute('aria-pressed', String(projects));
-  if (projects && bifrostCatalog && !bifrostProgress && !$('project-refresh').disabled) refreshBifrost();
+  if (projects && !collectionProgress && !collectionController) loadCollectionProgress();
+  if (projects && selectedLegendary && bifrostCatalog && !bifrostProgress && !$('project-refresh').disabled) refreshBifrost();
 }
 
 function projectIcon(item, className = 'project-item-icon') {
@@ -243,7 +362,7 @@ function acquisitionPanel(row, entry) {
   const panel = element('div', 'acquisition-panel');
   if (entry?.offers?.length) {
     panel.append(element('h4', '', 'Vendor exchanges'));
-    panel.append(element('p', 'evidence', `Each option is an alternative, not a combined budget. Costs below cover all ${row.missing} missing items, across resets if needed. Materials reserved for the direct Bifrost recipe are excluded from spendable balances. Purchase history, vendor access and unlocks are not checked.`));
+    panel.append(element('p', 'evidence', `Each option is an alternative, not a combined budget. Costs below cover all ${row.missing} missing items, across resets if needed. Materials reserved for this project?s direct recipe are excluded from spendable balances. Purchase history, vendor access and unlocks are not checked.`));
     const offers = element('div', 'vendor-offers');
     for (const offer of entry.offers) {
       const card = element('section', 'vendor-offer');
@@ -286,13 +405,14 @@ function renderBifrost(data) {
   const branches = data.tree.children;
   const owned = data.tree.allocated > 0;
   const finished = branches.filter(row => row.allocated >= row.required).length;
-  const heading = element('h2', '', owned ? 'The Bifrost is already owned' : `${finished} of 4 final components owned`);
+  const heading = element('h2', '', owned ? `${projectName()} is already owned` : branches.length ? `${finished} of ${branches.length} final components owned` : 'Acquisition project');
   const overview = element('section', 'project-overview');
   overview.append(element('p', 'eyebrow', 'YOUR LEGENDARY JOURNEY'), heading);
   const progress = element('progress', 'project-progress');
-  progress.max = 4; progress.value = owned ? 4 : finished;
-  progress.setAttribute('aria-label', 'Final components owned, not total crafting effort');
-  overview.append(progress, element('p', 'evidence', 'Final components owned · this meter does not estimate crafting time or gold cost.'));
+  progress.max = 100; progress.value = owned ? 100 : data.coverage || 0;
+  progress.setAttribute('aria-label', 'Recipe requirement coverage, not time or gold completion');
+  overview.append(progress, element('p', 'evidence', data.coverage == null ? 'A verified recipe is unavailable. Explore acquisition details below; no completion percentage is estimated.' : `${data.coverage}% requirement coverage${data.complete_scan ? '' : ' (partial account scan)'}. Recipe branches are weighted equally; this is not time or gold completion.`));
+  if (data.catalog?.scope) overview.append(element('p', 'evidence', data.catalog.scope));
   const components = element('div', 'project-components');
   branches.forEach(row => {
     const card = element('button', 'component-card');
@@ -303,7 +423,7 @@ function renderBifrost(data) {
     components.append(card);
   });
   overview.append(components); panel.append(overview);
-  if (!owned && data.tree.ready) panel.append(element('p', 'project-ready', 'The counted materials cover the remaining recipe tree. Craft the unfinished gifts in order, then combine the four final components in the Mystic Forge. Verify recipe unlocks and crafting levels in game.'));
+  if (!owned && data.tree.ready) panel.append(element('p', 'project-ready', 'The counted materials cover the remaining recipe tree. Craft the unfinished gifts in order, then follow the recipe source for the final combination. Verify recipe unlocks and crafting levels in game.'));
   data.warnings.forEach(warning => panel.append(element('p', 'lookup-error', warning)));
   (data.acquisition_warnings || []).forEach(warning => panel.append(element('p', 'lookup-error', warning)));
   panel.append(element('p', 'evidence', `Checked ${new Date(data.checked_at).toLocaleString()}. ${data.complete_scan ? 'All requested storage sources returned.' : 'Partial scan: missing amounts may be overstated.'} Game API updates can be delayed.`));
@@ -323,7 +443,7 @@ function renderBifrost(data) {
     row.children.forEach(child => details.append(branch(child, depth + 1)));
     return details;
   }
-  if (branches.length) panel.append(element('h2', '', 'The four components'));
+  if (branches.length) panel.append(element('h2', '', 'Final components'));
   branches.forEach(row => panel.append(branch(row)));
   const missing = data.shopping.filter(row => row.missing > 0);
   if (missing.length) {
@@ -357,11 +477,14 @@ async function refreshBifrost() {
   const finish = showLookupLoading($('project-results'), 'Counting gifts and materials across your account', signal);
   render();
   try {
-    const data = await api('/api/projects/bifrost', signal, 60000);
+    const data = await api(`/api/projects/bifrost?id=${selectedLegendary}`, signal, 60000);
     if (signal.aborted) return;
     bifrostProgress = data;
+    if (data.catalog) bifrostCatalog = data.catalog;
+    if (bifrostActive && trackedLegendary === selectedLegendary) { trackedProgress = data; trackedCatalog = bifrostCatalog; }
+    updateProjectHeading(); renderLegendaryLibrary();
     renderBifrost(data);
-    $('project-status').textContent = bifrostActive ? 'Tracking The Bifrost. Needed item types are protected in inventory, including surplus copies; review quantities here.' : 'Preview only. Track this project to protect its materials in inventory.';
+    $('project-status').textContent = bifrostActive && trackedLegendary === selectedLegendary ? `Tracking ${projectName()}. Needed item types are protected in inventory, including surplus copies; review quantities here.` : 'Preview only. Track this project to protect its materials in inventory.';
     render();
     if ($('item-dialog').open && selectedItem) renderCleanupDetails(selectedItem.item, selectedItem.slot);
   } catch (error) {
@@ -376,18 +499,24 @@ async function refreshBifrost() {
 
 async function initProjects() {
   try { bifrostActive = localStorage.getItem(bifrostPreference) === 'true'; } catch { /* Optional preference. */ }
-  const updateTrackButton = () => {
-    $('project-track').textContent = bifrostActive ? 'Stop tracking' : 'Track The Bifrost';
-    $('project-track').setAttribute('aria-pressed', String(bifrostActive));
-  };
+  try { trackedLegendary = Number(localStorage.getItem('quaggansHoard.trackedLegendary')) || 30698; } catch {}
+  const updateTrackButton = updateProjectHeading;
+  $('legendary-search').oninput = renderLegendaryLibrary;
+  $('legendary-type').onchange = updateLegendaryCategories;
+  $('legendary-subtype').onchange = renderLegendaryLibrary;
+  $('legendary-refresh').onclick = loadCollectionProgress;
+  loadLegendaryLibrary();
   updateTrackButton();
   $('inventory-tab').onclick = () => showAppView(false);
   $('projects-tab').onclick = () => showAppView(true);
   $('project-refresh').onclick = refreshBifrost;
   $('project-track').onclick = () => {
     try {
-      localStorage.setItem(bifrostPreference, String(!bifrostActive));
-      bifrostActive = !bifrostActive;
+      const active = !(bifrostActive && trackedLegendary === selectedLegendary);
+      localStorage.setItem(bifrostPreference, String(active));
+      localStorage.setItem('quaggansHoard.trackedLegendary', String(selectedLegendary));
+      bifrostActive = active; trackedLegendary = selectedLegendary;
+      trackedCatalog = bifrostCatalog; trackedProgress = bifrostProgress;
       window.persistDesktopPreferences?.();
       updateTrackButton(); render();
       if ($('item-dialog').open && selectedItem) renderCleanupDetails(selectedItem.item, selectedItem.slot);
@@ -395,16 +524,13 @@ async function initProjects() {
     } catch { $('project-status').textContent = 'Browser storage is blocked; the tracking preference could not be saved.'; }
   };
   try {
-    bifrostCatalog = await api('/bifrost.json', undefined, 15000);
-    const icon = bifrostCatalog.nodes[bifrostCatalog.root].icon;
-    if (icon?.startsWith('https://render.guildwars2.com/')) { $('project-icon').src = icon; $('project-icon').hidden = false; }
-    $('project-track').disabled = false;
-    $('project-refresh').disabled = false;
-    $('project-status').textContent = 'Refresh account progress to see which gifts and materials you already own.';
-    if (!$('projects-view').hidden) refreshBifrost();
+    if (bifrostActive) {
+      const id = trackedLegendary;
+      const catalog = await api(id === 30698 ? '/bifrost.json' : `/api/project-definition?id=${id}`, undefined, 60000);
+      if (bifrostActive && trackedLegendary === id) trackedCatalog = catalog;
+    }
     render();
   } catch {
-    $('project-track').disabled = false;
-    $('project-status').textContent = 'Requirements could not load. Reload the app to retry. While tracking is active, inventory stays in Keep until requirements can be checked.';
+    $('legendary-progress-status').replaceChildren(element('p', 'lookup-error', 'The tracked project could not load. Select it to retry. Inventory remains protected until its requirements are known.'));
   }
 }

@@ -6,11 +6,15 @@
   <main>
     <nav class="view-nav" aria-label="App views"><button id="inventory-tab" type="button" aria-pressed="true">Inventory</button><button id="projects-tab" type="button" aria-pressed="false">Legendary projects</button></nav>
     <section id="projects-view" hidden aria-label="Legendary projects">
-      <div class="project-heading"><div><p class="eyebrow">ONE HOARD. ONE LEGENDARY.</p><h1>The Bifrost</h1><p>Your path to the legendary staff.</p></div><img id="project-icon" alt="" hidden></div>
-      <div class="project-actions"><button id="project-track" class="primary-button" type="button" disabled>Track The Bifrost</button><button id="project-refresh" type="button" disabled>Refresh account progress</button><a href="https://wiki.guildwars2.com/wiki/The_Bifrost" target="_blank" rel="noopener noreferrer">Crafting guide ↗</a></div>
+      <div class="project-heading legendary-browser-heading"><div><p class="eyebrow">YOUR NEXT LEGENDARY</p><h1>Legendary collection</h1><p>Choose your next project. Closest collections first.</p></div></div>
+      <section id="legendary-library" class="legendary-library" aria-label="Legendary catalogue"><div class="legendary-list-heading"><h2>Legendaries <span id="legendary-count"></span></h2><button id="legendary-refresh" class="uses-retry" type="button">Refresh progress</button></div><div class="legendary-library-controls"><label>Name<input id="legendary-search" type="search" placeholder="Search legendaries"></label><label>Type<select id="legendary-type"><option value="">All equipment</option></select></label><label>Category<select id="legendary-subtype"><option value="">All categories</option></select></label></div><div id="legendary-progress-status" role="status"></div><div id="legendary-grid" class="legendary-grid"></div><p class="legendary-progress-key">Collection progress · owned first · unlinked collections last</p></section>
+      <section id="selected-project" hidden aria-label="Selected legendary">
+      <div class="selected-project-heading"><div><p class="eyebrow">SELECTED PROJECT</p><h2 id="project-title"></h2><p id="project-subtitle"></p></div><img id="project-icon" alt="" hidden></div>
+      <div class="project-actions"><button id="project-track" class="primary-button" type="button" disabled>Track</button><button id="project-refresh" type="button" disabled>Refresh account progress</button><a id="project-guide" href="https://wiki.guildwars2.com/wiki/Legendary_equipment" target="_blank" rel="noopener noreferrer">Crafting guide ↗</a></div>
       <p id="project-status" role="status">Loading project requirements…</p>
       <div id="project-results"></div>
-      <p class="project-scope">Tracks one Bifrost using character bags, bank, shared inventory, material storage and Legendary Armory. Vendor costs are compared with stored items and your wallet (wallet permission required). Equipped items, unopened containers and collection/reward-track progress are not inferred. Recipe unlocks and crafting levels must be checked in game.</p>
+      <p class="project-scope">Tracks one selected legendary using character bags, bank, shared inventory, material storage and Legendary Armory. Vendor costs are compared with stored items and your wallet (wallet permission required). Requirement coverage weights recipe branches equally; it is not time or gold completion. Unexpanded steps remain acquisition targets. Equipped items, unopened containers and collection/reward-track progress are not inferred. Recipe unlocks and crafting levels must be checked in game.</p>
+      </section>
     </section>
     <div id="inventory-view">
     <section class="hero">

@@ -12,6 +12,8 @@ import server
 ITEM = {'id': 1, 'name': 'Test material', 'type': 'CraftingMaterial', 'description': 'A test item.'}
 PROJECT_HOLDINGS = {24277: 300, 19721: 260, 19976: 20}
 PROJECT_PLAN = server.legendary.allocate(PROJECT_HOLDINGS)
+OTHER_CATALOG = {'root': 30699, 'name': 'Bolt', 'nodes': {'30699': {'id': 30699, 'name': 'Bolt', 'source': 'https://wiki.guildwars2.com/wiki/Bolt', 'ingredients': [{'id': 19721, 'count': 300}]}, '19721': {**server.legendary.CATALOG['nodes']['19721']}}}
+OTHER_PLAN = server.legendary.allocate(PROJECT_HOLDINGS, OTHER_CATALOG)
 PROJECT_WALLET = {23: 100, 7: 1500, 15: 100, 26: 100, 28: 300, 63: 600, 1: 1000000}
 CATALOG_FIXTURE = json.loads(Path(__file__).with_name('acquisition_fixture.json').read_text(encoding='utf-8'))
 WIKI_FIXTURE = {'id': 19675, 'name': 'Mystic Clover', 'revision': 123, 'checked_at': '2026-09-23T10:00:00Z',
@@ -165,9 +167,17 @@ async function smoke() {
   $('cleanup-filter').value = 'all';
   $('space-filter').value = 'all';
   expect(!document.getElementById('changes-only'), 'change tracking removed');
-  for (let i=0; i<100 && !bifrostCatalog; i++) await new Promise(r => setTimeout(r, 20));
-  expect(bifrostCatalog?.root === 30698, 'Bifrost requirements loaded');
   $('projects-tab').click();
+  expect($('selected-project').hidden, 'neutral browser has no selected legendary hero');
+  for (let i=0; i<100 && !collectionProgress; i++) await new Promise(r => setTimeout(r, 20));
+  expect($('legendary-grid').querySelector('.legendary-choice strong').textContent === 'The Bifrost', 'most complete collection sorted first');
+  expect($('legendary-grid').querySelectorAll('progress').length === 2, 'compact collection meters');
+  $('legendary-type').value = 'Weapon'; updateLegendaryCategories();
+  $('legendary-subtype').value = 'Sword'; renderLegendaryLibrary();
+  expect($('legendary-grid').querySelectorAll('button').length === 1 && $('legendary-grid').textContent.includes('Bolt'), 'weapon subtype filter');
+  $('legendary-subtype').value = ''; renderLegendaryLibrary();
+  await selectLegendary(30698);
+  expect($('project-track').textContent === 'Track', 'concise track label');
   for (let i=0; i<100 && $('project-refresh').disabled; i++) await new Promise(r => setTimeout(r, 20));
   expect(!$('projects-view').hidden && $('inventory-view').hidden, 'separate project view');
   expect($('project-results').textContent.includes('Still to collect'), 'remaining material list shown');
@@ -189,6 +199,13 @@ async function smoke() {
   expect(neededForBifrost(24277) && categoryFor(24277) === 'keep', 'active project protects required materials');
   expect(!neededForBifrost(1), 'unrelated inventory unaffected');
   expect(localStorage.getItem(bifrostPreference) === 'true', 'tracking preference saved');
+  await selectLegendary(30699);
+  expect($('project-title').textContent === 'Bolt', 'selecting a legendary loads its project');
+  expect(neededForBifrost(24277), 'browsing retains previous project protection');
+  expect($('project-results').textContent.includes('40% requirement coverage'), 'selected project shows coverage');
+  expect(!$('selected-project').hidden, 'selected project revealed');
+  $('project-track').click();
+  expect(trackedLegendary === 30699 && neededForBifrost(19721) && !neededForBifrost(24277), 'tracking switches only on explicit track click');
   $('project-track').click();
   expect(!neededForBifrost(24277), 'stopping project releases material protection');
   $('inventory-tab').click();
@@ -212,9 +229,14 @@ class FixtureHandler(server.Handler):
             finished.set()
             self.send(200, b'ok', 'text/plain')
             return
+        project_id = server.parse_qs(server.urlsplit(self.path).query).get('id', ['30698'])[0]
+        project_plan = OTHER_PLAN if project_id == '30699' else PROJECT_PLAN
         fixtures = {
+            '/api/legendary-progress': {'items': {'30698': {'percent': 94, 'current': 15, 'max': 16, 'owned': 0, 'achievements': [{'name': 'Legendary Weapon: The Bifrost'}]}, '30699': {'percent': 25, 'current': 4, 'max': 16, 'owned': 0, 'achievements': [{'name': 'Legendary Weapon: Bolt'}]}}, 'warnings': [], 'checked_at': '2026-09-23T10:00:00Z'},
+            '/api/legendaries': {'items': [{'id': 30698, 'name': 'The Bifrost', 'type': 'Weapon', 'subtype': 'Staff', 'weight': '', 'icon': server.legendary.CATALOG['nodes']['30698']['icon']}, {'id': 30699, 'name': 'Bolt', 'type': 'Weapon', 'subtype': 'Sword', 'weight': ''}]},
+            '/api/project-definition': OTHER_CATALOG,
             '/api/acquisition': WIKI_FIXTURE,
-            '/api/projects/bifrost': {**PROJECT_PLAN, 'wallet': PROJECT_WALLET, 'acquisition_warnings': [], 'locations': {}, 'holdings': PROJECT_HOLDINGS, 'warnings': [], 'complete_scan': True, 'checked_at': '2026-09-23T10:00:00Z'},
+            '/api/projects/bifrost': {**project_plan, 'catalog': OTHER_CATALOG if project_id == '30699' else server.legendary.CATALOG, 'coverage': 40, 'wallet': PROJECT_WALLET, 'acquisition_warnings': [], 'locations': {}, 'holdings': PROJECT_HOLDINGS, 'warnings': [], 'complete_scan': True, 'checked_at': '2026-09-23T10:00:00Z'},
             '/api/item-locations': {'total': 5, 'locations': [{'location': 'Other Character', 'slot': 'Bag 1, slot 1', 'count': 5}], 'warnings': []},
             '/api/characters': ['Test Character'],
             '/api/character-profile': {'name': 'Test Character', 'profession': 'Guardian', 'race': 'Human', 'level': 80, 'art': '/art/guardian.jpg', 'icon': None},

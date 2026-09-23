@@ -45,7 +45,7 @@ def page(title):
 
 def item_ids(wikitext):
     # Only the item infobox, including balanced nested templates.
-    match = re.search(r'\{\{\s*Item infobox\b', wikitext, re.I)
+    match = re.search(r'\{\{\s*(?:Item|Weapon|Armor|Trinket|Back item|Upgrade component|Gathering tool) infobox\b', wikitext, re.I)
     if not match:
         return set()
     tail = wikitext[match.end():]

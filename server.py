@@ -6,6 +6,7 @@ import cleanup
 import item_uses
 import item_locations
 import legendary
+import legendary_catalog
 import wiki_notes
 import wiki_acquisition
 from concurrent.futures import ThreadPoolExecutor
@@ -116,6 +117,14 @@ class Handler(BaseHTTPRequestHandler):
         static = {"/": ("index.html", "text/html"), "/app.js": ("app.js", "text/javascript"), "/style.css": ("style.css", "text/css"),
                   "/quaggan.svg": ("quaggan.svg", "image/svg+xml"), "/favicon.ico": ("favicon.ico", "image/x-icon")}
         try:
+            if url.path == '/api/legendaries':
+                self.send(200, json.dumps({'items': legendary_catalog.catalogue(gw2)}).encode(), 'application/json')
+                return
+            if url.path == '/api/project-definition':
+                raw_id = parse_qs(url.query).get('id', [''])[0]
+                if not raw_id.isascii() or not raw_id.isdigit(): raise ApiError('Choose a valid legendary.', 400)
+                self.send(200, json.dumps(legendary_catalog.definition(int(raw_id), gw2)).encode(), 'application/json')
+                return
             if url.path == '/bifrost.json':
                 self.send(200, json.dumps(legendary.CATALOG).encode(), 'application/json')
                 return
@@ -147,15 +156,19 @@ class Handler(BaseHTTPRequestHandler):
                 data = wiki_notes.summary(ids, gw2) if url.path == '/api/wiki-summary' else item_uses.crafting_summary(ids, gw2)
                 self.send(200, json.dumps(data).encode(), 'application/json')
                 return
-            if url.path not in ("/api/characters", "/api/inventory", "/api/cleanup", "/api/item-uses", '/api/character-profile', '/api/item-locations', '/api/projects/bifrost'):
+            if url.path not in ("/api/characters", "/api/inventory", "/api/cleanup", "/api/item-uses", '/api/character-profile', '/api/item-locations', '/api/projects/bifrost', '/api/legendary-progress'):
                 raise ApiError("Not found", 404)
             key = self.get_key()
             if not key or key == "your_api_key_here":
                 raise ApiError("Add your API key to GW2_API_KEY in .env, then click Retry. Enable characters and inventories permissions on your key.", 503)
             if url.path == "/api/characters":
                 data = gw2("/characters", key)
+            elif url.path == '/api/legendary-progress':
+                data = legendary_catalog.collection_progress(key, gw2)
             elif url.path == '/api/projects/bifrost':
-                data = legendary.progress(key, gw2)
+                raw_id = parse_qs(url.query).get('id', [str(legendary.CATALOG['root'])])[0]
+                if not raw_id.isascii() or not raw_id.isdigit(): raise ApiError('Choose a valid legendary.', 400)
+                data = legendary.progress(key, gw2, legendary_catalog.definition(int(raw_id), gw2))
             elif url.path == '/api/item-locations':
                 raw_id = parse_qs(url.query).get('id', [''])[0]
                 if not (raw_id.isascii() and raw_id.isdigit() and 0 < int(raw_id) < 2147483648):

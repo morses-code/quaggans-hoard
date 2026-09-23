@@ -34,7 +34,7 @@ def allocate(holdings, catalog=CATALOG):
             'needed_ids': sorted(needed - {catalog['root']})}
 
 
-def progress(key, fetch):
+def progress(key, fetch, catalog=CATALOG):
     jobs = [('Bank', '/account/bank', 'slots'), ('Shared inventory', '/account/inventory', 'slots'),
             ('Material storage', '/account/materials', 'slots'), ('Legendary Armory', '/account/legendaryarmory', 'slots'),
             ('Wallet', '/account/wallet', 'wallet')]
@@ -74,7 +74,12 @@ def progress(key, fetch):
                 holdings[slot['id']] += slot['count']
                 if slot['count']:
                     locations[slot['id']].append({'location': label, 'count': slot['count']})
-    result = allocate(holdings)
+    result = allocate(holdings, catalog)
+    def coverage(node):
+        owned = node['allocated'] / node['required'] if node['required'] else 1
+        return owned + (1 - owned) * (sum(coverage(child) for child in node['children']) / len(node['children']) if node['children'] else 0)
+    result['coverage'] = (100 if result['tree']['ready'] else min(99.9, round(coverage(result['tree']) * 100, 1))) if result['tree']['children'] or result['tree']['allocated'] else None
+    result['catalog'] = catalog
     result['wallet'] = wallet
     result['acquisition_warnings'] = acquisition_warnings
     result.update({'holdings': dict(holdings), 'locations': dict(locations), 'warnings': warnings,

@@ -271,7 +271,7 @@ function renderCleanupDetails(item, slot) {
   const status = advice?.status || 'check';
   panel.append(element('h3', '', 'Ways to clear space'));
   panel.append(element('p', '', `Category: ${categoryLabels[categoryFor(slot.id)]}`));
-  if (neededForBifrost(slot.id)) panel.append(element('p', 'project-reserved', 'Reserved for The Bifrost. Review quantities in Legendary projects before using or disposing of this item.'));
+  if (neededForBifrost(slot.id)) panel.append(element('p', 'project-reserved', `Reserved for ${trackedCatalog?.name || 'your legendary project'}. Review quantities in Legendary projects before using or disposing of this item.`));
   const protect = element('button', 'uses-retry', protectedItems.has(slot.id) ? 'Remove “Keep for me”' : 'Keep for me');
   protect.type = 'button';
   protect.setAttribute('aria-pressed', String(protectedItems.has(slot.id)));
@@ -330,7 +330,7 @@ function renderCleanupDetails(item, slot) {
       panel.append(section);
     }
     if (advice.storage_note) panel.append(element('p', '', advice.storage_note));
-    panel.append(element('h4', `cleanup-${status}`, neededForBifrost(slot.id) ? 'Keep for The Bifrost' : protectedItems.has(slot.id) ? 'Your preference: Keep for me' : `Collection disposal: ${cleanupLabels[status]}`));
+    panel.append(element('h4', `cleanup-${status}`, neededForBifrost(slot.id) ? `Keep for ${trackedCatalog?.name || 'your legendary project'}` : protectedItems.has(slot.id) ? 'Your preference: Keep for me' : `Collection disposal: ${cleanupLabels[status]}`));
     panel.append(element('p', '', advice.reason));
     panel.append(element('p', '', `Checked: ${new Date(advice.checked_at).toLocaleString()}. The game API may return delayed progress.`));
     for (const collection of advice.collections) {
@@ -489,7 +489,7 @@ function matchesEquipment(item, slot) {
 
 function cardReason(item, slot) {
   const id = slot.id;
-  if (neededForBifrost(id)) return 'Needed for The Bifrost';
+  if (neededForBifrost(id)) return `Needed for ${trackedCatalog?.name || 'your legendary project'}`;
   if (protectedItems.has(id)) return 'Keep for me';
   if (craftingResults[id]?.count > 0) return `Used in ${craftingResults[id].count} recipes`;
   if (equipmentTypes.has(item.type)) return `${subtype(item)}${item.level != null ? ` · Level ${item.level}` : ''}`;
@@ -634,7 +634,7 @@ async function loadInventory() {
     $('inventory-loading').hidden = true;
     $('bags').setAttribute('aria-busy', 'false');
     checkCleanup();
-    if (!$('projects-view').hidden && bifrostCatalog && !bifrostProgress) refreshBifrost();
+    if (!$('projects-view').hidden && selectedLegendary && bifrostCatalog && !bifrostProgress) refreshBifrost();
   } catch (error) {
     if (error.name !== 'AbortError') { $('status').textContent = error.message; analysisDisplay('warning'); }
   } finally {
