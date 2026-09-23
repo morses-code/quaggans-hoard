@@ -1,5 +1,10 @@
 # Quaggan’s Hoard · Inventory Companion
 
+Windows desktop development is on `windows-app`; the original working browser app
+is preserved on `main` and tag `web-baseline`. See [Windows setup and packaging](WINDOWS.md).
+The desktop build uses Windows Credential Manager instead of `.env` and includes
+its own Python runtime. Browser mode below remains supported.
+
 A local, read-only character inventory viewer. Python 3.10+; no dependencies.
 
 The interface takes its parchment, crimson, and ink palette from the Guild Wars 2 website. Character selection loads race, level, profession, and official profession artwork/emblems independently from the inventory. These are profession illustrations, not rendered portraits of your character. Source attribution is in `public/art/SOURCES.md`.

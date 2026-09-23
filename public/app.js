@@ -278,6 +278,7 @@ function renderCleanupDetails(item, slot) {
     if (next.has(slot.id)) next.delete(slot.id); else next.add(slot.id);
     try {
       localStorage.setItem(protectedItemsKey, JSON.stringify([...next]));
+      window.persistDesktopPreferences?.();
       protectedItems = next;
       render();
       renderCleanupDetails(item, slot);
@@ -670,6 +671,7 @@ $('save-character').addEventListener('click', () => {
     if (clearing) localStorage.removeItem(defaultCharacterKey);
     else localStorage.setItem(defaultCharacterKey, name);
     defaultCharacter = clearing ? '' : name;
+    window.persistDesktopPreferences?.();
     updateDefaultCharacterButton();
     status.textContent = clearing ? 'Default character removed.' : `${name} will load first next time on this browser.`;
   } catch {
@@ -744,4 +746,4 @@ itemDialog.addEventListener('close', () => {
 $('hero-art').addEventListener('error', () => { $('hero-art').hidden = true; $('art-caption').hidden = true; });
 $('profession-icon').addEventListener('error', () => { $('profession-icon').hidden = true; $('profession-fallback').hidden = false; });
 $('refresh').addEventListener('click', () => charactersLoaded ? loadInventory() : loadCharacters());
-loadCharacters();
+if (window.desktopConnected !== false) loadCharacters();

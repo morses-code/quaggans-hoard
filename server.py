@@ -76,6 +76,9 @@ def inventory(name, key):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def get_key(self):
+        return load_key()
+
     def handle(self):
         try:
             super().handle()
@@ -127,7 +130,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if url.path not in ("/api/characters", "/api/inventory", "/api/cleanup", "/api/item-uses", '/api/character-profile', '/api/item-locations'):
                 raise ApiError("Not found", 404)
-            key = load_key()
+            key = self.get_key()
             if not key or key == "your_api_key_here":
                 raise ApiError("Add your API key to GW2_API_KEY in .env, then click Retry. Enable characters and inventories permissions on your key.", 503)
             if url.path == "/api/characters":
