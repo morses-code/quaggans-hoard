@@ -406,6 +406,13 @@ function acquisitionPanel(row, entry) {
   return panel;
 }
 
+function projectOwnedSummary(row, data) {
+  const owned = Number(data.holdings?.[row.id] || 0);
+  const stored = (data.locations?.[row.id] || []).filter(place => place.location === 'Material storage').reduce((sum, place) => sum + place.count, 0);
+  const storageAvailable = !(data.warnings || []).some(warning => warning.startsWith('Material storage unavailable'));
+  return `${data.complete_scan ? 'Owned' : 'Known owned'}: ${owned.toLocaleString()} · Material storage: ${storageAvailable ? stored.toLocaleString() : 'unavailable'}${data.complete_scan ? '' : ' · partial scan'}`;
+}
+
 function renderBifrost(data) {
   const panel = $('project-results');
   panel.replaceChildren();
@@ -426,6 +433,7 @@ function renderBifrost(data) {
     card.classList.toggle('component-owned', row.allocated >= row.required);
     card.type = 'button';
     card.append(projectIcon(row, 'component-icon'), element('strong', '', row.name), element('span', '', row.allocated >= row.required ? 'Owned' : row.ready ? 'Materials gathered' : 'In progress'));
+    card.append(element('small', 'component-owned-quantity', projectOwnedSummary(row, data)));
     card.onclick = () => { const target = $('component-' + row.id); target.open = true; target.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'}); };
     components.append(card);
   });
@@ -440,7 +448,9 @@ function renderBifrost(data) {
     details.open = false;
     if (depth === 0) details.id = 'component-' + row.id;
     const summary = element('summary', '');
-    summary.append(projectIcon(row), element('span', 'branch-name', row.name), element('span', 'branch-count', `${row.allocated} / ${row.required}`), element('span', 'branch-state', row.missing && row.children.length ? (row.ready ? 'Materials gathered' : 'Ingredients needed') : row.missing ? `Need ${row.missing}` : 'Owned'));
+    const label = element('span', 'branch-name', row.name);
+    label.append(element('small', 'branch-owned-quantity', projectOwnedSummary(row, data)));
+    summary.append(projectIcon(row), label, element('span', 'branch-count', `${row.allocated} / ${row.required} allocated`), element('span', 'branch-state', row.missing && row.children.length ? (row.ready ? 'Materials gathered' : 'Ingredients needed') : row.missing ? `Need ${row.missing}` : 'Owned'));
     details.append(summary);
     if (row.note) details.append(element('p', '', row.note));
     const locations = data.locations[row.id] || [];
@@ -462,6 +472,7 @@ function renderBifrost(data) {
       const summary = element('summary', '');
       const label = element('div', 'material-label');
       label.append(element('strong', '', row.name), element('span', '', `${row.allocated.toLocaleString()} of ${row.required.toLocaleString()} allocated · ${data.acquisition?.[row.id]?.offers?.length ? 'Vendor options & tips' : 'Acquisition tips'}`));
+      label.append(element('span', 'material-owned-quantity', projectOwnedSummary(row, data)));
       summary.append(projectIcon(row), label, element('span', 'material-needed', `${row.missing.toLocaleString()} to go`));
       const meter = element('progress', 'material-progress'); meter.max = row.required; meter.value = row.allocated;
       meter.setAttribute('aria-label', `${row.name}: ${row.allocated} of ${row.required} allocated`);

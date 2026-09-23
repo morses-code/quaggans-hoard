@@ -3,6 +3,18 @@ import legendary
 
 
 class BifrostTests(unittest.TestCase):
+    def test_completed_component_in_material_storage_satisfies_requirement(self):
+        def fetch(path, key):
+            return [{'id': 19674, 'count': 1}, {'id': 24277, 'count': 300}] if path == '/account/materials' else []
+        result = legendary.progress('key', fetch)
+        mastery = next(row for row in result['tree']['children'] if row['id'] == 19674)
+        self.assertEqual((mastery['allocated'], mastery['missing'], mastery['children']), (1, 0, []))
+        self.assertEqual(result['holdings'][19674], 1)
+        self.assertEqual(result['locations'][19674], [{'location': 'Material storage', 'count': 1}])
+        self.assertNotIn(19925, result['needed_ids'])
+        dust = next(row for row in result['shopping'] if row['id'] == 24277)
+        self.assertEqual(dust['allocated'], 300)
+
     def test_wallet_failure_does_not_mark_inventory_scan_incomplete(self):
         def fetch(path, key):
             if path == '/account/wallet': raise RuntimeError('Denied')
