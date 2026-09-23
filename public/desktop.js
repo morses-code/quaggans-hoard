@@ -20,7 +20,7 @@ async function desktopBoot() {
   settings.className = 'desktop-account';
   settings.innerHTML = `<div class="desktop-account-heading"><span>WINDOWS EDITION</span><button id="account-settings" type="button">Account settings</button></div>
     <form id="connect-form" hidden><h2>Your hoard, on your computer.</h2>
-    <p>Create a Guild Wars 2 API key with <strong>account, characters, inventories and progression</strong> permissions. Your key is saved in Windows Credential Manager for your Windows user. It is sent only to the official Guild Wars 2 API.</p>
+    <p>Create a Guild Wars 2 API key with <strong>account, characters, inventories and progression</strong> permissions. Also enable <strong>wallet</strong> for legendary vendor currency checks. Your key is saved in Windows Credential Manager for your Windows user. It is sent only to the official Guild Wars 2 API.</p>
     <p><a href="https://account.arena.net/applications" target="_blank" rel="noopener noreferrer">Create or manage your API keys ↗</a></p>
     <label for="desktop-key">API KEY</label><input id="desktop-key" type="password" autocomplete="off" spellcheck="false" required maxlength="200" placeholder="Paste your API key">
     <div class="desktop-account-actions"><button id="connect-key" class="primary-button" type="submit">Save and connect</button><button id="forget-key" type="button">Forget saved key</button><button id="cancel-settings" type="button">Cancel</button></div>

@@ -10,6 +10,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import server
 
 ITEM = {'id': 1, 'name': 'Test material', 'type': 'CraftingMaterial', 'description': 'A test item.'}
+PROJECT_HOLDINGS = {24277: 300, 19721: 260, 19976: 20}
+PROJECT_PLAN = server.legendary.allocate(PROJECT_HOLDINGS)
+PROJECT_ACQUISITION = server.legendary.acquisition_options(PROJECT_PLAN, PROJECT_HOLDINGS, {23: 100, 7: 1500, 15: 100, 26: 100, 28: 300, 63: 600, 1: 1000000}, True)
 ADVICE = {'status': 'check', 'reason': 'Not disposal advice', 'collections': [],
           'storage': {'overflow': 10},
           'checked_at': '2026-09-22T12:00:00Z', 'primary_action': 'deposit',
@@ -144,6 +147,10 @@ async function smoke() {
   for (let i=0; i<100 && $('project-refresh').disabled; i++) await new Promise(r => setTimeout(r, 20));
   expect(!$('projects-view').hidden && $('inventory-view').hidden, 'separate project view');
   expect($('project-results').textContent.includes('Still to collect'), 'remaining material list shown');
+  expect($('project-results').querySelectorAll('.component-icon').length === 4, 'four component icons');
+  expect($('project-results').textContent.includes('BUY-4373'), 'clover vendor options displayed');
+  expect($('project-results').textContent.includes('250 reserved'), 'trade costs explain reserved ectoplasm');
+  expect($('project-results').textContent.includes('Resources cover up to 5'), 'clover trade capacity shown');
   $('project-track').click();
   expect(neededForBifrost(24277) && categoryFor(24277) === 'keep', 'active project protects required materials');
   expect(!neededForBifrost(1), 'unrelated inventory unaffected');
@@ -172,7 +179,7 @@ class FixtureHandler(server.Handler):
             self.send(200, b'ok', 'text/plain')
             return
         fixtures = {
-            '/api/projects/bifrost': {**server.legendary.allocate({24277: 300}), 'locations': {}, 'holdings': {24277: 300}, 'warnings': [], 'complete_scan': True, 'checked_at': '2026-09-23T10:00:00Z'},
+            '/api/projects/bifrost': {**PROJECT_PLAN, 'acquisition': PROJECT_ACQUISITION, 'acquisition_warnings': [], 'locations': {}, 'holdings': PROJECT_HOLDINGS, 'warnings': [], 'complete_scan': True, 'checked_at': '2026-09-23T10:00:00Z'},
             '/api/item-locations': {'total': 5, 'locations': [{'location': 'Other Character', 'slot': 'Bag 1, slot 1', 'count': 5}], 'warnings': []},
             '/api/characters': ['Test Character'],
             '/api/character-profile': {'name': 'Test Character', 'profession': 'Guardian', 'race': 'Human', 'level': 80, 'art': '/art/guardian.jpg', 'icon': None},

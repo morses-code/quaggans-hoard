@@ -53,3 +53,5 @@ then rebuild the Windows package. Normal builds use the committed icon files.
 Built with pywebview (https://pywebview.flowrl.com/), keyring
 (https://keyring.readthedocs.io/), and PyInstaller (https://pyinstaller.org/).
 GW2 artwork credits are in `_internal/public/art/SOURCES.md`.
+
+For legendary vendor currency comparisons, also enable wallet permission on your API key. Without it, currency balances display as unknown; inventory scanning still works.

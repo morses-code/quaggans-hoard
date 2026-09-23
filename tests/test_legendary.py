@@ -3,6 +3,47 @@ import legendary
 
 
 class BifrostTests(unittest.TestCase):
+    def test_vendor_costs_reserve_direct_recipe_inputs(self):
+        holdings = {19721: 260, 19976: 20}
+        plan = legendary.allocate(holdings)
+        result = legendary.acquisition_options(plan, holdings, {23: 100, 7: 1500}, True)
+        offer = next(row for row in result['19675']['offers'] if row['vendor'] == 'BUY-4373')
+        ecto = next(row for row in offer['costs'] if row['kind'] == 'item' and row['id'] == 19721)
+        self.assertEqual((ecto['owned'], ecto['reserved'], ecto['available']), (260, 250, 10))
+        self.assertEqual((ecto['per_trade'], ecto['required'], ecto['shortfall']), (2, 154, 144))
+        self.assertEqual(offer['supported_output'], 5)
+
+    def test_vendor_limits_and_unknown_balances(self):
+        holdings = {19721: 1000, 19976: 1000}
+        plan = legendary.allocate(holdings)
+        wallet = {23: 1000, 7: 100000}
+        offers = legendary.acquisition_options(plan, holdings, wallet, True)['19675']['offers']
+        offer = next(row for row in offers if row['vendor'] == 'BUY-4373')
+        self.assertEqual(offer['supported_output'], 10)
+        unknown = legendary.acquisition_options(plan, holdings, None, True)['19675']['offers'][0]
+        self.assertIsNone(unknown['supported_output'])
+        self.assertTrue(any(row['owned'] is None for row in unknown['costs'] if row['kind'] == 'currency'))
+        partial = legendary.acquisition_options(plan, holdings, wallet, False)['19675']['offers'][0]
+        self.assertIsNone(partial['supported_output'])
+        self.assertEqual(partial['costs'][0]['known_owned'], 1000)
+
+    def test_completed_gift_releases_reserved_trade_materials(self):
+        holdings = {19674: 1, 19925: 30, 19721: 300, 19976: 30}
+        plan = legendary.allocate(holdings)
+        offer = next(row for row in legendary.acquisition_options(plan, holdings, {23: 30}, True)['19675']['offers'] if row['vendor'] == 'Lyhr')
+        shard = next(cost for cost in offer['costs'] if cost['id'] == 19925)
+        self.assertEqual(shard['reserved'], 0)
+        self.assertEqual(offer['supported_output'], 10)
+
+    def test_wallet_failure_does_not_mark_inventory_scan_incomplete(self):
+        def fetch(path, key):
+            if path == '/account/wallet': raise RuntimeError('Denied')
+            return []
+        result = legendary.progress('key', fetch)
+        self.assertTrue(result['complete_scan'])
+        self.assertTrue(result['acquisition_warnings'])
+        self.assertIsNone(result['acquisition']['19675']['offers'][0]['supported_output'])
+
     def test_shared_dust_is_allocated_only_once(self):
         result = legendary.allocate({24277: 300})
         dust = next(row for row in result['shopping'] if row['id'] == 24277)

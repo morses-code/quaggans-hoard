@@ -119,8 +119,26 @@ The progress bar measures final components owned, not time, gold or overall effo
 
 The first version tracks one final Bifrost crafting path. It counts bags, bank,
 shared slots, material storage and Legendary Armory. It does not infer equipped
-items, unopened starter kits, wallet balances, precursor collection progress,
+items, unopened starter kits, precursor collection progress,
 recipe unlocks, crafting levels or reward-track/map-completion percentages. Those
 steps have source links and guidance. Clover gambling is not expanded into a
 fixed-cost recipe. Failed sources produce explicit partial results. Refresh after
 crafting in game; GW2 API data can lag. Account holdings are never saved to disk.
+
+#### Acquisition tips and vendor budgets
+
+Expand a missing material for acquisition tips and source links. Reviewed offers
+cover clover vendors in WvW, PvP, fractals, raids, the Wizard's Vault and the Mystic
+Forge routes, plus Bloodstone Shards, Obsidian Shards, Icy Runestones and Gift of
+Zhaitan. These are curated alternatives, not an exhaustive live vendor catalog.
+Costs and limits are in acquisition.json with a review date and sources.
+
+Enable **wallet** on your API key for currency comparisons. Missing permissions
+show unknown currency balances; inventory progress still works. Trade tables show
+per-purchase costs, the cost of the entire missing quantity, spendable holdings and
+shortfalls. Direct Bifrost requirements are reserved first so that their ectoplasm
+and obsidian cannot simultaneously fund clover purchases. Each offer is evaluated
+independently, and full-shortfall costs can span multiple weekly/seasonal resets.
+The resource-supported quantity is capped by the listed purchase limit, but past
+purchases, vendor access, unlocks and seasonal availability are not verified. No
+trade is executed and no vendor currency is actually reserved or spent.

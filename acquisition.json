@@ -1,0 +1,605 @@
+{
+  "reviewed": "2026-09-23",
+  "resources": {
+    "item:19976": {
+      "id": 19976,
+      "kind": "item",
+      "name": "Mystic Coin",
+      "icon": "https://render.guildwars2.com/file/AB0317DF5B0E1BA47436A5420248660765154C08/62864.png"
+    },
+    "item:19721": {
+      "id": 19721,
+      "kind": "item",
+      "name": "Glob of Ectoplasm",
+      "icon": "https://render.guildwars2.com/file/18CE5D78317265000CF3C23ED76AB3CEE86BA60E/65941.png"
+    },
+    "currency:23": {
+      "id": 23,
+      "kind": "currency",
+      "name": "Spirit Shard",
+      "icon": "https://render.guildwars2.com/file/0AD608DE7FDEE0B909905C0AF9401321CF65CD94/1010701.png"
+    },
+    "currency:7": {
+      "id": 7,
+      "kind": "currency",
+      "name": "Fractal Relic",
+      "icon": "https://render.guildwars2.com/file/0204DAD0D40674035F9F5F5270043C3207EEA7E8/619320.png"
+    },
+    "currency:15": {
+      "id": 15,
+      "kind": "currency",
+      "name": "Badge of Honor",
+      "icon": "https://render.guildwars2.com/file/AC3178E7BD066BC597F9D4247848E6033A047EDE/699004.png"
+    },
+    "currency:26": {
+      "id": 26,
+      "kind": "currency",
+      "name": "WvW Skirmish Claim Ticket",
+      "icon": "https://render.guildwars2.com/file/0F911F55FF800FC0589970FF9137BF050699392F/1010702.png"
+    },
+    "currency:28": {
+      "id": 28,
+      "kind": "currency",
+      "name": "Magnetite Shard",
+      "icon": "https://render.guildwars2.com/file/95F8F70D97186780CE45B54600B90BE356D8EA7C/1302741.png"
+    },
+    "item:19925": {
+      "id": 19925,
+      "kind": "item",
+      "name": "Obsidian Shard",
+      "icon": "https://render.guildwars2.com/file/AE16FCC326D80A3906B17B6A75E8A91980BE4670/434362.png"
+    },
+    "currency:63": {
+      "id": 63,
+      "kind": "currency",
+      "name": "Astral Acclaim",
+      "icon": "https://render.guildwars2.com/file/1856A01E331452E4C14E4C9CF4F818E3FAEF9B79/3124964.png"
+    },
+    "currency:69": {
+      "id": 69,
+      "kind": "currency",
+      "name": "Tales of Dungeon Delving",
+      "icon": "https://render.guildwars2.com/file/37CCE672250A3170B71760949C4C9C9B186517B1/619327.png"
+    },
+    "currency:1": {
+      "id": 1,
+      "kind": "currency",
+      "name": "Coin",
+      "icon": "https://render.guildwars2.com/file/98457F504BA2FAC8457F532C4B30EDC23929ACF9/619316.png"
+    },
+    "currency:2": {
+      "id": 2,
+      "kind": "currency",
+      "name": "Karma",
+      "icon": "https://render.guildwars2.com/file/94953FA23D3E0D23559624015DFEA4CFAA07F0E5/155026.png"
+    },
+    "currency:30": {
+      "id": 30,
+      "kind": "currency",
+      "name": "PvP League Ticket",
+      "icon": "https://render.guildwars2.com/file/DB05F5F20B94A3D12AF11041F60E194D66584957/1313248.png"
+    }
+  },
+  "items": {
+    "19675": {
+      "tips": [
+        {
+          "title": "WvW: work on two requirements together",
+          "text": "The Gift of Battle Item Reward Track awards 2 Mystic Clovers along the track as well as the Gift of Battle. Neither reward is counted until claimed and visible in your account.",
+          "source": "https://wiki.guildwars2.com/wiki/Gift_of_Battle_Item_Reward_Track"
+        },
+        {
+          "title": "PvP and WvW reward tracks",
+          "text": "Many tracks award clovers. Check the track's reward list: quantities and first-completion rewards vary.",
+          "source": "https://wiki.guildwars2.com/wiki/Mystic_Clover#Reward_tracks"
+        },
+        {
+          "title": "Mystic Forge",
+          "text": "The traditional clover recipes are random. This planner does not treat their expected costs as guaranteed purchases.",
+          "source": "https://wiki.guildwars2.com/wiki/Mystic_Clover#Recipes"
+        }
+      ],
+      "offers": [
+        {
+          "vendor": "BUY-4373",
+          "area": "Mistlock Observatory / Mistlock Sanctuary",
+          "output": 1,
+          "costs": [
+            {
+              "resource": "item:19976",
+              "count": 2
+            },
+            {
+              "resource": "item:19721",
+              "count": 2
+            },
+            {
+              "resource": "currency:23",
+              "count": 2
+            },
+            {
+              "resource": "currency:7",
+              "count": 150
+            }
+          ],
+          "limit": 10,
+          "period": "week",
+          "condition": "Vendor access required; check weekly allowance in game.",
+          "source": "https://wiki.guildwars2.com/wiki/BUY-4373"
+        },
+        {
+          "vendor": "Dugan",
+          "area": "World vs. World",
+          "output": 1,
+          "costs": [
+            {
+              "resource": "item:19976",
+              "count": 2
+            },
+            {
+              "resource": "item:19721",
+              "count": 2
+            },
+            {
+              "resource": "currency:15",
+              "count": 10
+            },
+            {
+              "resource": "currency:26",
+              "count": 20
+            }
+          ],
+          "limit": 5,
+          "period": "week",
+          "condition": "Check weekly allowance in game.",
+          "source": "https://wiki.guildwars2.com/wiki/Dugan"
+        },
+        {
+          "vendor": "Manfred Njallson",
+          "area": "Lion's Arch Aerodrome",
+          "output": 1,
+          "costs": [
+            {
+              "resource": "item:19976",
+              "count": 2
+            },
+            {
+              "resource": "item:19721",
+              "count": 2
+            },
+            {
+              "resource": "currency:23",
+              "count": 2
+            },
+            {
+              "resource": "currency:28",
+              "count": 30
+            }
+          ],
+          "limit": 15,
+          "period": "week",
+          "condition": "Raid vendor access required; check weekly allowance in game.",
+          "source": "https://wiki.guildwars2.com/wiki/Manfred_Njallson"
+        },
+        {
+          "vendor": "Lyhr",
+          "area": "The Wizard's Tower",
+          "output": 1,
+          "costs": [
+            {
+              "resource": "item:19976",
+              "count": 3
+            },
+            {
+              "resource": "item:19925",
+              "count": 3
+            },
+            {
+              "resource": "item:19721",
+              "count": 5
+            },
+            {
+              "resource": "currency:23",
+              "count": 3
+            }
+          ],
+          "limit": null,
+          "period": null,
+          "condition": "Requires access to Lyhr in Secrets of the Obscure. Verify vendor access in game.",
+          "source": "https://wiki.guildwars2.com/wiki/Lyhr"
+        },
+        {
+          "vendor": "Wizard's Vault",
+          "area": "Astral Rewards",
+          "output": 1,
+          "costs": [
+            {
+              "resource": "currency:63",
+              "count": 60
+            }
+          ],
+          "limit": 20,
+          "period": "season",
+          "condition": "Check current seasonal stock and remaining allowance in game.",
+          "source": "https://wiki.guildwars2.com/wiki/Mystic_Clover#Sold_by"
+        },
+        {
+          "vendor": "League Vendor",
+          "area": "Heart of the Mists",
+          "output": 1,
+          "costs": [
+            {
+              "resource": "item:19976",
+              "count": 2
+            },
+            {
+              "resource": "item:19721",
+              "count": 2
+            },
+            {
+              "resource": "currency:23",
+              "count": 2
+            },
+            {
+              "resource": "currency:30",
+              "count": 5
+            }
+          ],
+          "limit": 5,
+          "period": "week",
+          "condition": "The weekly limit is shared with the Emblem of Tournament Victory offer. Check remaining allowance in game.",
+          "source": "https://wiki.guildwars2.com/wiki/League_Vendor"
+        },
+        {
+          "vendor": "Miyani / Mystic Forge Attendants",
+          "area": "Lion's Arch and Mystic Forge locations",
+          "output": 1,
+          "costs": [
+            {
+              "resource": "item:19976",
+              "count": 3
+            },
+            {
+              "resource": "item:19925",
+              "count": 3
+            },
+            {
+              "resource": "item:19721",
+              "count": 5
+            },
+            {
+              "resource": "currency:23",
+              "count": 3
+            }
+          ],
+          "limit": 10,
+          "period": "week",
+          "condition": "This weekly allowance is shared across Miyani and Mystic Forge Attendants. Lyhr has a separate unlimited offer.",
+          "source": "https://wiki.guildwars2.com/wiki/Mystic_Clover#Sold_by"
+        }
+      ]
+    },
+    "20797": {
+      "offers": [
+        {
+          "vendor": "Miyani",
+          "area": "Lion's Arch / Mystic Forge vendors",
+          "output": 1,
+          "costs": [
+            {
+              "resource": "currency:23",
+              "count": 200
+            }
+          ],
+          "limit": null,
+          "period": null,
+          "condition": "",
+          "source": "https://wiki.guildwars2.com/wiki/Bloodstone_Shard#Acquisition"
+        }
+      ],
+      "tips": [
+        {
+          "title": "Acquisition notes",
+          "text": "Purchase from a Mystic Forge vendor for 200 Spirit Shards.",
+          "source": "https://wiki.guildwars2.com/wiki/Bloodstone_Shard#Acquisition"
+        }
+      ]
+    },
+    "19669": {
+      "offers": [
+        {
+          "vendor": "Dungeon Armor and Weapons",
+          "area": "Fort Marriner, Lion's Arch",
+          "output": 1,
+          "costs": [
+            {
+              "resource": "currency:69",
+              "count": 500
+            }
+          ],
+          "limit": null,
+          "period": null,
+          "condition": "Requires 5 completions of Arah explorable mode; completion eligibility is not verified.",
+          "source": "https://wiki.guildwars2.com/wiki/Gift_of_Zhaitan#Acquisition"
+        }
+      ],
+      "tips": [
+        {
+          "title": "Acquisition notes",
+          "text": "Purchase from a dungeon merchant for 500 Tales of Dungeon Delving.",
+          "source": "https://wiki.guildwars2.com/wiki/Gift_of_Zhaitan#Acquisition"
+        }
+      ]
+    },
+    "19676": {
+      "offers": [
+        {
+          "vendor": "Rojan the Penitent",
+          "area": "Earthshake Basin, Frostgorge Sound",
+          "output": 1,
+          "costs": [
+            {
+              "resource": "currency:1",
+              "count": 10000
+            }
+          ],
+          "limit": null,
+          "period": null,
+          "condition": "Vendor availability depends on the Claw of Jormag meta event.",
+          "source": "https://wiki.guildwars2.com/wiki/Icy_Runestone#Sold_by"
+        }
+      ],
+      "tips": [
+        {
+          "title": "Acquisition notes",
+          "text": "Purchase from Rojan the Penitent for 1 gold each when available.",
+          "source": "https://wiki.guildwars2.com/wiki/Icy_Runestone#Acquisition"
+        }
+      ]
+    },
+    "19925": {
+      "offers": [
+        {
+          "vendor": "Tactician Deathstrider",
+          "area": "Temple of Balthazar, Straits of Devastation",
+          "output": 1,
+          "costs": [
+            {
+              "resource": "currency:2",
+              "count": 2100
+            }
+          ],
+          "limit": null,
+          "period": null,
+          "condition": "The temple must be under Pact control.",
+          "source": "https://wiki.guildwars2.com/wiki/Tactician_Deathstrider#Items_sold"
+        }
+      ],
+      "tips": []
+    },
+    "19678": {
+      "tips": [
+        {
+          "title": "World vs. World",
+          "text": "Complete the Gift of Battle Item Reward Track. It also awards 2 clovers along the way.",
+          "source": "https://wiki.guildwars2.com/wiki/Gift_of_Battle_Item_Reward_Track"
+        }
+      ],
+      "offers": []
+    },
+    "19677": {
+      "tips": [
+        {
+          "title": "Explore core Tyria",
+          "text": "Complete core Tyria world completion. This tracker checks the gift itself, not map completion percentages.",
+          "source": "https://wiki.guildwars2.com/wiki/Gift_of_Exploration#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "29180": {
+      "tips": [
+        {
+          "title": "Trading Post",
+          "text": "This item can be traded. Compare current listings in game; market prices are not included in the vendor calculations.",
+          "source": "https://wiki.guildwars2.com/wiki/The_Legend#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "24572": {
+      "tips": [
+        {
+          "title": "Trading Post",
+          "text": "This item can be traded. Compare current listings in game; market prices are not included in the vendor calculations.",
+          "source": "https://wiki.guildwars2.com/wiki/Superior_Sigil_of_Nullification#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "19721": {
+      "tips": [
+        {
+          "title": "Trading Post",
+          "text": "This item can be traded. Compare current listings in game; market prices are not included in the vendor calculations.",
+          "source": "https://wiki.guildwars2.com/wiki/Glob_of_Ectoplasm#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "20323": {
+      "tips": [
+        {
+          "title": "Trading Post",
+          "text": "This item can be traded. Compare current listings in game; market prices are not included in the vendor calculations.",
+          "source": "https://wiki.guildwars2.com/wiki/Unidentified_Dye#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "24522": {
+      "tips": [
+        {
+          "title": "Trading Post",
+          "text": "This item can be traded. Compare current listings in game; market prices are not included in the vendor calculations.",
+          "source": "https://wiki.guildwars2.com/wiki/Opal_Orb#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "24274": {
+      "tips": [
+        {
+          "title": "Trading Post",
+          "text": "This item can be traded. Compare current listings in game; market prices are not included in the vendor calculations.",
+          "source": "https://wiki.guildwars2.com/wiki/Pile_of_Radiant_Dust#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "24275": {
+      "tips": [
+        {
+          "title": "Trading Post",
+          "text": "This item can be traded. Compare current listings in game; market prices are not included in the vendor calculations.",
+          "source": "https://wiki.guildwars2.com/wiki/Pile_of_Luminous_Dust#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "24276": {
+      "tips": [
+        {
+          "title": "Trading Post",
+          "text": "This item can be traded. Compare current listings in game; market prices are not included in the vendor calculations.",
+          "source": "https://wiki.guildwars2.com/wiki/Pile_of_Incandescent_Dust#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "24277": {
+      "tips": [
+        {
+          "title": "Trading Post",
+          "text": "This item can be traded. Compare current listings in game; market prices are not included in the vendor calculations.",
+          "source": "https://wiki.guildwars2.com/wiki/Pile_of_Crystalline_Dust#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "24295": {
+      "tips": [
+        {
+          "title": "Trading Post",
+          "text": "This item can be traded. Compare current listings in game; market prices are not included in the vendor calculations.",
+          "source": "https://wiki.guildwars2.com/wiki/Vial_of_Powerful_Blood#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "24283": {
+      "tips": [
+        {
+          "title": "Trading Post",
+          "text": "This item can be traded. Compare current listings in game; market prices are not included in the vendor calculations.",
+          "source": "https://wiki.guildwars2.com/wiki/Powerful_Venom_Sac#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "24300": {
+      "tips": [
+        {
+          "title": "Trading Post",
+          "text": "This item can be traded. Compare current listings in game; market prices are not included in the vendor calculations.",
+          "source": "https://wiki.guildwars2.com/wiki/Elaborate_Totem#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "24357": {
+      "tips": [
+        {
+          "title": "Trading Post",
+          "text": "This item can be traded. Compare current listings in game; market prices are not included in the vendor calculations.",
+          "source": "https://wiki.guildwars2.com/wiki/Vicious_Fang#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "24289": {
+      "tips": [
+        {
+          "title": "Trading Post",
+          "text": "This item can be traded. Compare current listings in game; market prices are not included in the vendor calculations.",
+          "source": "https://wiki.guildwars2.com/wiki/Armored_Scale#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "24351": {
+      "tips": [
+        {
+          "title": "Trading Post",
+          "text": "This item can be traded. Compare current listings in game; market prices are not included in the vendor calculations.",
+          "source": "https://wiki.guildwars2.com/wiki/Vicious_Claw#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "24358": {
+      "tips": [
+        {
+          "title": "Trading Post",
+          "text": "This item can be traded. Compare current listings in game; market prices are not included in the vendor calculations.",
+          "source": "https://wiki.guildwars2.com/wiki/Ancient_Bone#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "30698": {
+      "tips": [],
+      "offers": []
+    },
+    "19654": {
+      "tips": [],
+      "offers": []
+    },
+    "19626": {
+      "tips": [],
+      "offers": []
+    },
+    "19674": {
+      "tips": [],
+      "offers": []
+    },
+    "19623": {
+      "tips": [
+        {
+          "title": "Acquisition notes",
+          "text": "Artificer 400 and the Gift of Energy recipe are required. Check the recipe unlock in game.",
+          "source": "https://wiki.guildwars2.com/wiki/Gift_of_Energy#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "19638": {
+      "tips": [
+        {
+          "title": "Acquisition notes",
+          "text": "Chef 400 and the Gift of Color recipe are required. Check the recipe unlock in game.",
+          "source": "https://wiki.guildwars2.com/wiki/Gift_of_Color#Acquisition"
+        }
+      ],
+      "offers": []
+    },
+    "19673": {
+      "tips": [],
+      "offers": []
+    },
+    "19672": {
+      "tips": [],
+      "offers": []
+    }
+  }
+}
