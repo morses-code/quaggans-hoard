@@ -20,7 +20,8 @@ class Preview(FixtureHandler):
         path = self.path.split('?')[0]
         if path == '/app.js':
             mobile = b"\nif (location.search.includes('mobile')) { document.documentElement.style.width='390px'; document.body.style.width='390px'; }"
-            self.send(200, (server.ROOT / 'public/app.js').read_bytes() + mobile, 'text/javascript; charset=utf-8')
+            project = b"\nif (location.search.includes('projects')) { showAppView(true); }"
+            self.send(200, (server.ROOT / 'public/app.js').read_bytes() + mobile + project, 'text/javascript; charset=utf-8')
             return
         data = None
         if path == '/api/inventory':
@@ -44,9 +45,10 @@ if __name__ == '__main__':
     directory.mkdir(exist_ok=True)
     try:
         for label, size in [('desktop', '1440,1400'), ('mobile', '390,1100')]:
+            view = label + ('&projects' if '--projects' in sys.argv else '')
             target = directory / f'{label}-review-{time.time_ns()}.png'
             with tempfile.TemporaryDirectory(prefix='inventory-visual-', ignore_cleanup_errors=True) as profile:
-                subprocess.run([r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe', '--headless', '--disable-gpu', '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--user-data-dir=' + profile, '--window-size=' + size, '--screenshot=' + str(target), '--virtual-time-budget=10000', f'http://127.0.0.1:{http.server_port}/?{label}'], capture_output=True, timeout=30)
+                subprocess.run([r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe', '--headless', '--disable-gpu', '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--user-data-dir=' + profile, '--window-size=' + size, '--screenshot=' + str(target), '--virtual-time-budget=10000', f'http://127.0.0.1:{http.server_port}/?{view}'], capture_output=True, timeout=30)
                 for _ in range(100):
                     if target.exists():
                         break

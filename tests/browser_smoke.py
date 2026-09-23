@@ -138,6 +138,19 @@ async function smoke() {
   $('cleanup-filter').value = 'all';
   $('space-filter').value = 'all';
   expect(!document.getElementById('changes-only'), 'change tracking removed');
+  for (let i=0; i<100 && !bifrostCatalog; i++) await new Promise(r => setTimeout(r, 20));
+  expect(bifrostCatalog?.root === 30698, 'Bifrost requirements loaded');
+  $('projects-tab').click();
+  for (let i=0; i<100 && $('project-refresh').disabled; i++) await new Promise(r => setTimeout(r, 20));
+  expect(!$('projects-view').hidden && $('inventory-view').hidden, 'separate project view');
+  expect($('project-results').textContent.includes('Still to collect'), 'remaining material list shown');
+  $('project-track').click();
+  expect(neededForBifrost(24277) && categoryFor(24277) === 'keep', 'active project protects required materials');
+  expect(!neededForBifrost(1), 'unrelated inventory unaffected');
+  expect(localStorage.getItem(bifrostPreference) === 'true', 'tracking preference saved');
+  $('project-track').click();
+  expect(!neededForBifrost(24277), 'stopping project releases material protection');
+  $('inventory-tab').click();
   await loadInventory();
   expect($('space-filter').value === 'all', 'refresh clears space filter');
   expect(Object.keys(cleanupResults).length === 0, 'refresh must clear advice');
@@ -159,6 +172,7 @@ class FixtureHandler(server.Handler):
             self.send(200, b'ok', 'text/plain')
             return
         fixtures = {
+            '/api/projects/bifrost': {**server.legendary.allocate({24277: 300}), 'locations': {}, 'holdings': {24277: 300}, 'warnings': [], 'complete_scan': True, 'checked_at': '2026-09-23T10:00:00Z'},
             '/api/item-locations': {'total': 5, 'locations': [{'location': 'Other Character', 'slot': 'Bag 1, slot 1', 'count': 5}], 'warnings': []},
             '/api/characters': ['Test Character'],
             '/api/character-profile': {'name': 'Test Character', 'profession': 'Guardian', 'race': 'Human', 'level': 80, 'art': '/art/guardian.jpg', 'icon': None},

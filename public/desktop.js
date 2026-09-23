@@ -12,7 +12,7 @@ async function desktopRequest(path, data) {
 async function desktopBoot() {
   const state = await desktopRequest('/desktop/state');
   window.desktopConnected = state.connected;
-  for (const key of ['tyria.defaultCharacter', 'quaggansHoard.protectedItems']) {
+  for (const key of ['tyria.defaultCharacter', 'quaggansHoard.protectedItems', 'quaggansHoard.bifrostActive']) {
     if (state.preferences[key] !== undefined) localStorage.setItem(key, state.preferences[key]);
     else localStorage.removeItem(key);
   }
@@ -58,7 +58,7 @@ async function desktopBoot() {
   let saveQueue = Promise.resolve();
   window.persistDesktopPreferences = () => {
     const preferences = {};
-    for (const key of ['tyria.defaultCharacter', 'quaggansHoard.protectedItems']) {
+    for (const key of ['tyria.defaultCharacter', 'quaggansHoard.protectedItems', 'quaggansHoard.bifrostActive']) {
       const value = localStorage.getItem(key);
       if (value !== null) preferences[key] = value;
     }

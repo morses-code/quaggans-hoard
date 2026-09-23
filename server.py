@@ -5,6 +5,7 @@ import logging
 import cleanup
 import item_uses
 import item_locations
+import legendary
 import wiki_notes
 from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -114,6 +115,12 @@ class Handler(BaseHTTPRequestHandler):
         static = {"/": ("index.html", "text/html"), "/app.js": ("app.js", "text/javascript"), "/style.css": ("style.css", "text/css"),
                   "/quaggan.svg": ("quaggan.svg", "image/svg+xml"), "/favicon.ico": ("favicon.ico", "image/x-icon")}
         try:
+            if url.path == '/bifrost.json':
+                self.send(200, json.dumps(legendary.CATALOG).encode(), 'application/json')
+                return
+            if url.path == '/projects.js':
+                self.send(200, (ROOT / 'public/projects.js').read_bytes(), 'text/javascript; charset=utf-8')
+                return
             if url.path in {f'/art/{name}.jpg' for name in ART_PROFESSIONS}:
                 self.send(200, (ROOT / 'public' / url.path.lstrip('/')).read_bytes(), 'image/jpeg')
                 return
@@ -129,13 +136,15 @@ class Handler(BaseHTTPRequestHandler):
                 data = wiki_notes.summary(ids, gw2) if url.path == '/api/wiki-summary' else item_uses.crafting_summary(ids, gw2)
                 self.send(200, json.dumps(data).encode(), 'application/json')
                 return
-            if url.path not in ("/api/characters", "/api/inventory", "/api/cleanup", "/api/item-uses", '/api/character-profile', '/api/item-locations'):
+            if url.path not in ("/api/characters", "/api/inventory", "/api/cleanup", "/api/item-uses", '/api/character-profile', '/api/item-locations', '/api/projects/bifrost'):
                 raise ApiError("Not found", 404)
             key = self.get_key()
             if not key or key == "your_api_key_here":
                 raise ApiError("Add your API key to GW2_API_KEY in .env, then click Retry. Enable characters and inventories permissions on your key.", 503)
             if url.path == "/api/characters":
                 data = gw2("/characters", key)
+            elif url.path == '/api/projects/bifrost':
+                data = legendary.progress(key, gw2)
             elif url.path == '/api/item-locations':
                 raw_id = parse_qs(url.query).get('id', [''])[0]
                 if not (raw_id.isascii() and raw_id.isdigit() and 0 < int(raw_id) < 2147483648):

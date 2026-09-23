@@ -1,9 +1,18 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Quaggan’s Hoard | Inventory Companion</title><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/quaggan.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Quaggan’s Hoard | Inventory Companion</title><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/quaggan.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css"><script src="/projects.js" defer></script><script src="/app.js" defer></script></head>
 <body>
   <header class="site-header"><a class="brand" href="/" aria-label="Quaggan’s Hoard home"><span class="brand-mark" aria-hidden="true"><img src="/quaggan.svg" width="48" height="48" alt=""></span><span class="brand-name">Quaggan’s Hoard<span class="brand-sub">INVENTORY COMPANION</span></span></a><a class="game-link" href="https://www.guildwars2.com/en/" target="_blank" rel="noopener noreferrer">GUILD WARS 2 ↗</a></header>
   <main>
+    <nav class="view-nav" aria-label="App views"><button id="inventory-tab" type="button" aria-pressed="true">Inventory</button><button id="projects-tab" type="button" aria-pressed="false">Legendary projects</button></nav>
+    <section id="projects-view" hidden aria-label="Legendary projects">
+      <div class="project-heading"><div><p class="eyebrow">ONE HOARD. ONE LEGENDARY.</p><h1>The Bifrost</h1><p>Your path to the legendary staff.</p></div><img id="project-icon" alt="" hidden></div>
+      <div class="project-actions"><button id="project-track" class="primary-button" type="button" disabled>Track The Bifrost</button><button id="project-refresh" type="button" disabled>Refresh account progress</button><a href="https://wiki.guildwars2.com/wiki/The_Bifrost" target="_blank" rel="noopener noreferrer">Crafting guide ↗</a></div>
+      <p id="project-status" role="status">Loading project requirements…</p>
+      <div id="project-results"></div>
+      <p class="project-scope">Tracks one Bifrost using character bags, bank, shared inventory, material storage and Legendary Armory. Equipped items, unopened containers, wallet balances and collection/reward-track progress are not inferred. Recipe unlocks and crafting levels must be checked in game.</p>
+    </section>
+    <div id="inventory-view">
     <section class="hero">
       <img id="hero-art" class="hero-art" alt="" hidden>
       <div class="hero-bubbles" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -50,6 +59,7 @@
       <div id="inventory-loading" class="inventory-loading" hidden><span class="spinner" aria-hidden="true"></span><strong>Opening your bags…</strong><p>Retrieving items from Guild Wars 2</p><div class="skeleton-grid" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
       <div id="bags"></div>
     </section>
+    </div>
     <footer><span class="footer-brand">Quaggan’s Hoard<span>INVENTORY COMPANION · A HOME FOR YOUR TREASURES</span></span><p>A fan-made, read-only companion. Guild Wars 2 artwork © ArenaNet.<br>Game data can take a few minutes to update.</p></footer>
   </main>
   <dialog id="item-dialog" aria-labelledby="item-title" aria-describedby="item-description">
