@@ -218,6 +218,9 @@ async function smoke() {
   $('project-track').click();
   expect(!neededForBifrost(24277), 'stopping project releases material protection');
   $('inventory-tab').click();
+  const projectBeforeCharacterSwitch = bifrostProgress;
+  await loadInventory({refreshProjects: false});
+  expect(bifrostProgress === projectBeforeCharacterSwitch, 'character switch preserves account-wide project snapshot');
   await loadInventory();
   expect($('space-filter').value === 'all', 'refresh clears space filter');
   expect(Object.keys(cleanupResults).length === 0, 'refresh must clear advice');

@@ -593,8 +593,8 @@ function render() {
   if (focusedSlot) document.querySelector(`[data-slot-key="${focusedSlot}"]`)?.focus({preventScroll: true});
 }
 
-async function loadInventory() {
-  invalidateBifrost();
+async function loadInventory(options = {}) {
+  if (options.refreshProjects !== false) invalidateBifrost();
   usesController?.abort();
   cleanupController?.abort();
   clearTimeout(cleanupExpiry);
@@ -689,7 +689,7 @@ $('character').addEventListener('change', () => {
   $('search').value = '';
   $('character-preference-status').hidden = true;
   updateDefaultCharacterButton();
-  loadInventory();
+  loadInventory({refreshProjects: false});
 });
 $('search').addEventListener('input', render);
 $('cleanup-filter').addEventListener('change', render);

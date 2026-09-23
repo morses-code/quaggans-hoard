@@ -408,9 +408,8 @@ function acquisitionPanel(row, entry) {
 
 function projectOwnedSummary(row, data) {
   const owned = Number(data.holdings?.[row.id] || 0);
-  const stored = (data.locations?.[row.id] || []).filter(place => place.location === 'Material storage').reduce((sum, place) => sum + place.count, 0);
-  const storageAvailable = !(data.warnings || []).some(warning => warning.startsWith('Material storage unavailable'));
-  return `${data.complete_scan ? 'Owned' : 'Known owned'}: ${owned.toLocaleString()} · Material storage: ${storageAvailable ? stored.toLocaleString() : 'unavailable'}${data.complete_scan ? '' : ' · partial scan'}`;
+  const locations = (data.locations?.[row.id] || []).map(place => `${place.source === 'bags' ? 'On ' : ''}${place.location}: ${place.count.toLocaleString()}`);
+  return [`${data.complete_scan ? 'Owned' : 'Known owned'}: ${owned.toLocaleString()}`, ...locations, ...(data.complete_scan ? [] : ['partial scan'])].join(' · ');
 }
 
 function renderBifrost(data) {

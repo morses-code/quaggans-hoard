@@ -35,8 +35,8 @@ def allocate(holdings, catalog=CATALOG):
 
 
 def progress(key, fetch, catalog=CATALOG):
-    jobs = [('Bank', '/account/bank', 'slots'), ('Shared inventory', '/account/inventory', 'slots'),
-            ('Material storage', '/account/materials', 'slots'), ('Legendary Armory', '/account/legendaryarmory', 'slots'),
+    jobs = [('Bank', '/account/bank', 'bank'), ('Shared inventory', '/account/inventory', 'shared'),
+            ('Material storage', '/account/materials', 'materials'), ('Legendary Armory', '/account/legendaryarmory', 'armory'),
             ('Wallet', '/account/wallet', 'wallet')]
     warnings = []
     try:
@@ -50,19 +50,19 @@ def progress(key, fetch, catalog=CATALOG):
         try:
             data = fetch(path, key)
             if kind == 'wallet':
-                return label, data, None
+                return label, kind, data, None
             slots = [slot for bag in data['bags'] if bag for slot in bag['inventory']] if kind == 'bags' else data
-            return label, [slot for slot in slots if slot], None
+            return label, kind, [slot for slot in slots if slot], None
         except Exception:
-            return label, [], f'{label} unavailable; its items are not counted.'
+            return label, kind, [], f'{label} unavailable; its items are not counted.'
 
     holdings = defaultdict(int)
     locations = defaultdict(list)
     wallet = None
     acquisition_warnings = []
     with ThreadPoolExecutor(max_workers=4) as pool:
-        for label, slots, warning in pool.map(read, jobs):
-            if label == 'Wallet':
+        for label, kind, slots, warning in pool.map(read, jobs):
+            if kind == 'wallet':
                 if warning:
                     acquisition_warnings.append('Wallet unavailable. Enable wallet permission on your API key to compare currency costs.')
                 else:
@@ -70,12 +70,15 @@ def progress(key, fetch, catalog=CATALOG):
                 continue
             if warning:
                 warnings.append(warning)
+            source_counts = defaultdict(int)
             for slot in slots:
-                if label == 'Legendary Armory' and slot['id'] != catalog['root']:
+                if kind == 'armory' and slot['id'] != catalog['root']:
                     continue  # Ownership is not a consumable crafting ingredient.
                 holdings[slot['id']] += slot['count']
-                if slot['count']:
-                    locations[slot['id']].append({'location': label, 'count': slot['count']})
+                source_counts[slot['id']] += slot['count']
+            for item_id, count in source_counts.items():
+                if count:
+                    locations[item_id].append({'location': label, 'count': count, 'source': kind})
     result = allocate(holdings, catalog)
     def coverage(node):
         owned = node['allocated'] / node['required'] if node['required'] else 1

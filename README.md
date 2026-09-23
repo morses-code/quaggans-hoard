@@ -133,7 +133,10 @@ percentage. Public catalogue and recipe data are cached for six hours.
 Selected-project requirement coverage weights each recipe branch equally and
 accounts for partial stacks; it is distinct from collection progress. Owned gifts
 replace their ingredients, and shared materials are allocated once. It counts bags,
-bank, shared slots, material storage and Legendary Armory. Equipped items, unopened
+bank, shared slots, material storage and Legendary Armory. Owned quantities include
+all character bags and show counts by storage source or character name. Switching
+the inventory character leaves the legendary snapshot intact; Refresh account
+progress updates it. Equipped items, unopened
 containers, crafting unlocks and reward-track/map-completion steps are not inferred.
 Failed sources produce partial results. Refresh after crafting; game API data can lag.
 

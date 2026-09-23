@@ -10,10 +10,26 @@ class BifrostTests(unittest.TestCase):
         mastery = next(row for row in result['tree']['children'] if row['id'] == 19674)
         self.assertEqual((mastery['allocated'], mastery['missing'], mastery['children']), (1, 0, []))
         self.assertEqual(result['holdings'][19674], 1)
-        self.assertEqual(result['locations'][19674], [{'location': 'Material storage', 'count': 1}])
+        self.assertEqual(result['locations'][19674], [{'location': 'Material storage', 'count': 1, 'source': 'materials'}])
         self.assertNotIn(19925, result['needed_ids'])
         dust = next(row for row in result['shopping'] if row['id'] == 24277)
         self.assertEqual(dust['allocated'], 300)
+
+    def test_all_characters_and_account_storage_are_combined_with_locations(self):
+        def fetch(path, key):
+            if path == '/characters': return ['First Character', 'Wallet']
+            if path == '/characters/First%20Character/inventory':
+                return {'bags': [{'inventory': [{'id': 24277, 'count': 12}, {'id': 24277, 'count': 8}]}]}
+            if path == '/characters/Wallet/inventory':
+                return {'bags': [None, {'inventory': [{'id': 24277, 'count': 30}]}]}
+            counts = {'/account/bank': 40, '/account/inventory': 10, '/account/materials': 200}
+            return [{'id': 24277, 'count': counts[path]}] if path in counts else []
+        result = legendary.progress('key', fetch)
+        self.assertEqual(result['holdings'][24277], 300)
+        self.assertEqual(next(row for row in result['shopping'] if row['id'] == 24277)['allocated'], 300)
+        places = {row['location']: row['count'] for row in result['locations'][24277]}
+        self.assertEqual(places, {'Bank': 40, 'Shared inventory': 10, 'Material storage': 200, 'First Character': 20, 'Wallet': 30})
+        self.assertTrue(result['complete_scan'])
 
     def test_wallet_failure_does_not_mark_inventory_scan_incomplete(self):
         def fetch(path, key):
