@@ -7,6 +7,7 @@ import item_uses
 import item_locations
 import legendary
 import wiki_notes
+import wiki_acquisition
 from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -127,6 +128,16 @@ class Handler(BaseHTTPRequestHandler):
             if url.path in static:
                 filename, content_type = static[url.path]
                 self.send(200, (ROOT / "public" / filename).read_bytes(), content_type + "; charset=utf-8")
+                return
+            if url.path == '/api/acquisition':
+                raw_id = parse_qs(url.query).get('id', [''])[0]
+                if not (raw_id.isascii() and raw_id.isdigit() and 0 < int(raw_id) < 2147483648):
+                    raise ApiError('Choose a valid item.', 400)
+                try:
+                    data = wiki_acquisition.lookup(int(raw_id), gw2)
+                except Exception:
+                    raise ApiError('Acquisition details could not be retrieved or matched to this item. Please retry shortly; the wiki may be unavailable.') from None
+                self.send(200, json.dumps(data).encode(), 'application/json')
                 return
             if url.path in ('/api/crafting-summary', '/api/wiki-summary'):
                 parts = parse_qs(url.query).get('ids', [''])[0].split(',')

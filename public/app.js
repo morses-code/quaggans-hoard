@@ -159,6 +159,7 @@ function descriptionText(value) {
 
 function showItem(item, slot) {
   selectedItem = { item, slot };
+  prepareItemAcquisition({...item, id: slot.id});
   $('detail-icon').hidden = !item.icon?.startsWith('https://render.guildwars2.com/');
   if (!$('detail-icon').hidden) $('detail-icon').src = item.icon;
   $('item-title').textContent = item.name;
@@ -743,6 +744,7 @@ itemDialog.addEventListener('click', event => {
   backdropPointerDown = false;
 });
 itemDialog.addEventListener('close', () => {
+  itemAcquisitionController?.abort();
   locationsController?.abort();
   backdropPointerDown = false;
   usesController?.abort();

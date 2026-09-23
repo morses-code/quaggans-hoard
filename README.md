@@ -127,11 +127,14 @@ crafting in game; GW2 API data can lag. Account holdings are never saved to disk
 
 #### Acquisition tips and vendor budgets
 
-Expand a missing material for acquisition tips and source links. Reviewed offers
-cover clover vendors in WvW, PvP, fractals, raids, the Wizard's Vault and the Mystic
-Forge routes, plus Bloodstone Shards, Obsidian Shards, Icy Runestones and Gift of
-Zhaitan. These are curated alternatives, not an exhaustive live vendor catalog.
-Costs and limits are in acquisition.json with a review date and sources.
+Expand any missing material, or “How to obtain this item” in an inventory item,
+to load its acquisition and notes sections from the GW2 Wiki. This uses a generic
+parser, not an item-specific list of methods, vendors or prices. Wiki item IDs must
+match the selected API item. Unmatched pages and failed requests offer a retry.
+Public results are cached in memory for six hours, with revision and attribution.
+Text and tables are imported safely without running wiki HTML. Unrecognized costs
+remain readable but receive no affordability estimate. The Bifrost recipe tree
+itself remains the reviewed definition in bifrost.json.
 
 Enable **wallet** on your API key for currency comparisons. Missing permissions
 show unknown currency balances; inventory progress still works. Trade tables show

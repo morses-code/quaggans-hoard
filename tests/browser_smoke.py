@@ -12,7 +12,13 @@ import server
 ITEM = {'id': 1, 'name': 'Test material', 'type': 'CraftingMaterial', 'description': 'A test item.'}
 PROJECT_HOLDINGS = {24277: 300, 19721: 260, 19976: 20}
 PROJECT_PLAN = server.legendary.allocate(PROJECT_HOLDINGS)
-PROJECT_ACQUISITION = server.legendary.acquisition_options(PROJECT_PLAN, PROJECT_HOLDINGS, {23: 100, 7: 1500, 15: 100, 26: 100, 28: 300, 63: 600, 1: 1000000}, True)
+PROJECT_WALLET = {23: 100, 7: 1500, 15: 100, 26: 100, 28: 300, 63: 600, 1: 1000000}
+CATALOG_FIXTURE = json.loads(Path(__file__).with_name('acquisition_fixture.json').read_text(encoding='utf-8'))
+WIKI_FIXTURE = {'id': 19675, 'name': 'Mystic Clover', 'revision': 123, 'checked_at': '2026-09-23T10:00:00Z',
+    'source': 'https://wiki.guildwars2.com/wiki/Mystic_Clover', 'unparsed_offers': 0,
+    'sections': [{'title': 'Reward tracks', 'blocks': [{'kind': 'table', 'rows': [['Track', 'Quantity'], ['Example track', '2']]}]}],
+    'offers': [{**offer, 'costs': [{**CATALOG_FIXTURE['resources'][cost['resource']], 'per_trade': cost['count']} for cost in offer['costs']]}
+               for offer in CATALOG_FIXTURE['items']['19675']['offers']]}
 ADVICE = {'status': 'check', 'reason': 'Not disposal advice', 'collections': [],
           'storage': {'overflow': 10},
           'checked_at': '2026-09-22T12:00:00Z', 'primary_action': 'deposit',
@@ -60,6 +66,9 @@ async function smoke() {
   expect($('bags').querySelectorAll('button.slot').length === 1, 'crafting filter');
   $('bags').querySelector('button.slot').click();
   expect($('item-dialog').open, 'item dialog');
+  $('item-acquisition').open = true;
+  for (let i=0; i<100 && !$('item-acquisition').querySelector('.wiki-source-table'); i++) await new Promise(r => setTimeout(r, 20));
+  expect($('item-acquisition').textContent.includes('Example track'), 'generic inventory acquisition lookup');
   $('find-item').click();
   expect($('item-locations').querySelector('.spinner'), 'account lookup spinner visible');
   expect($('item-locations').getAttribute('aria-busy') === 'true', 'account lookup announces busy');
@@ -72,6 +81,7 @@ async function smoke() {
   window.fetch = (path, options) => {
     if (path === '/__timeout') return new Promise((resolve, reject) => options.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), {once: true}));
     if (path.startsWith('/api/item-locations')) return Promise.reject(new TypeError('Test connection failed'));
+    if (path.startsWith('/api/acquisition')) return Promise.reject(new TypeError('Test wiki failed'));
     return originalFetch(path, options);
   };
   try {
@@ -83,6 +93,10 @@ async function smoke() {
     expect($('item-locations').querySelector('.lookup-error'), 'failed lookup shows error');
     expect(!$('item-locations').querySelector('.spinner'), 'failed lookup removes spinner');
     expect(!$('find-item').disabled, 'failed lookup permits retry');
+    const wikiLookup = acquisitionLookup({id: 1}, new AbortController().signal);
+    await wikiLookup.load();
+    expect(wikiLookup.panel.querySelector('.lookup-error') && wikiLookup.panel.querySelector('button'), 'wiki failure offers retry');
+    expect(!wikiLookup.panel.querySelector('.spinner'), 'wiki failure stops loading indicator');
   } finally { window.fetch = originalFetch; }
   expect($('item-cleanup').textContent.includes('API checked'), 'evidence label');
   expect($('item-cleanup').textContent.includes('Room for 10.'), 'action explanation');
@@ -148,9 +162,19 @@ async function smoke() {
   expect(!$('projects-view').hidden && $('inventory-view').hidden, 'separate project view');
   expect($('project-results').textContent.includes('Still to collect'), 'remaining material list shown');
   expect($('project-results').querySelectorAll('.component-icon').length === 4, 'four component icons');
+  const clover = [...document.querySelectorAll('.material-card')].find(card => card.querySelector('strong').textContent === 'Mystic Clover');
+  clover.open = true;
+  for (let i=0; i<100 && !clover.textContent.includes('BUY-4373'); i++) await new Promise(r => setTimeout(r, 20));
+  expect(clover.querySelector('.wiki-source-table'), 'wiki acquisition table imported');
   expect($('project-results').textContent.includes('BUY-4373'), 'clover vendor options displayed');
   expect($('project-results').textContent.includes('250 reserved'), 'trade costs explain reserved ectoplasm');
   expect($('project-results').textContent.includes('Resources cover up to 5'), 'clover trade capacity shown');
+  const source = await api('/api/acquisition?id=19675');
+  const row = bifrostProgress.shopping.find(row => row.id === 19675);
+  const plentiful = {...bifrostProgress, holdings: {19721: 1000, 19976: 1000}, wallet: {23: 1000, 7: 100000}};
+  expect(budgetWikiOffers(source, row, plentiful).offers.find(o => o.vendor === 'BUY-4373').supported_output === 10, 'wiki purchase limit caps capacity');
+  expect(budgetWikiOffers(source, row, {...plentiful, wallet: null}).offers[0].supported_output === null, 'missing wallet is unknown');
+  expect(budgetWikiOffers(source, row, {...plentiful, complete_scan: false}).offers[0].supported_output === null, 'partial holdings cannot confirm affordability');
   $('project-track').click();
   expect(neededForBifrost(24277) && categoryFor(24277) === 'keep', 'active project protects required materials');
   expect(!neededForBifrost(1), 'unrelated inventory unaffected');
@@ -179,7 +203,8 @@ class FixtureHandler(server.Handler):
             self.send(200, b'ok', 'text/plain')
             return
         fixtures = {
-            '/api/projects/bifrost': {**PROJECT_PLAN, 'acquisition': PROJECT_ACQUISITION, 'acquisition_warnings': [], 'locations': {}, 'holdings': PROJECT_HOLDINGS, 'warnings': [], 'complete_scan': True, 'checked_at': '2026-09-23T10:00:00Z'},
+            '/api/acquisition': WIKI_FIXTURE,
+            '/api/projects/bifrost': {**PROJECT_PLAN, 'wallet': PROJECT_WALLET, 'acquisition_warnings': [], 'locations': {}, 'holdings': PROJECT_HOLDINGS, 'warnings': [], 'complete_scan': True, 'checked_at': '2026-09-23T10:00:00Z'},
             '/api/item-locations': {'total': 5, 'locations': [{'location': 'Other Character', 'slot': 'Bag 1, slot 1', 'count': 5}], 'warnings': []},
             '/api/characters': ['Test Character'],
             '/api/character-profile': {'name': 'Test Character', 'profession': 'Guardian', 'race': 'Human', 'level': 80, 'art': '/art/guardian.jpg', 'icon': None},

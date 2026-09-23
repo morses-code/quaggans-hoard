@@ -43,3 +43,12 @@ html{scrollbar-gutter:stable}html:has(#item-dialog[open]),body:has(#item-dialog[
 .vendor-offers{grid-template-columns:minmax(0,1fr)}.vendor-offer{min-width:0}.project-table-scroll{max-width:100%;min-width:0}.cost-scroll-hint{display:none}@media(max-width:760px){.cost-scroll-hint{display:block;font-size:10px!important;color:#6b7e72}}
 
 .component-owned{border-color:#94b89a;background:#91b89a1a}.component-owned span{color:#c8e8bd}.vendor-short{background:#f3eadf;color:#87603d}
+
+.wiki-acquisition { min-width: 0; }
+.wiki-source-section { margin: 12px 0; padding: 14px; border: 1px solid #547b7855; border-radius: 10px; background: #f6faf4; }
+.wiki-source-section > summary { cursor: pointer; color: #24575a; font-weight: 650; }
+.wiki-source-section p { line-height: 1.65; white-space: pre-line; }
+.wiki-source-table { border-collapse: collapse; min-width: 100%; font-size: .9rem; }
+.wiki-source-table th, .wiki-source-table td { padding: 10px 12px; border-bottom: 1px solid #547b7844; text-align: left; vertical-align: top; min-width: 100px; max-width: 500px; }
+.wiki-source-table th { color: #24575a; background: #e6efe6; }
+.wiki-acquisition > .evidence { margin: 12px 0; }

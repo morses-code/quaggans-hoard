@@ -3,6 +3,100 @@ let bifrostActive = false;
 let bifrostCatalog;
 let bifrostProgress;
 let bifrostController;
+let itemAcquisitionController;
+
+function budgetWikiOffers(entry, row, snapshot) {
+  const reserved = {};
+  function visit(node) {
+    reserved[node.id] = (reserved[node.id] || 0) + node.allocated;
+    node.children.forEach(visit);
+  }
+  visit(snapshot.tree);
+  return {...entry, offers: entry.offers.map(offer => {
+    const trades = Math.ceil(row.missing / offer.output);
+    const costs = offer.costs.map(cost => {
+      const isItem = cost.kind === 'item';
+      const known = isItem ? snapshot.complete_scan : snapshot.wallet != null;
+      const owned = (isItem ? snapshot.holdings : snapshot.wallet)?.[cost.id] || 0;
+      const keep = isItem ? reserved[cost.id] || 0 : 0;
+      const available = Math.max(0, owned - keep);
+      return {...cost, known_owned: owned, owned: known ? owned : null, reserved: keep,
+        required: trades * cost.per_trade, available: known ? available : null,
+        shortfall: known ? Math.max(0, trades * cost.per_trade - available) : null};
+    });
+    const supported = costs.every(c => c.available != null) ? Math.min(trades, offer.limit ?? trades, ...costs.map(c => Math.floor(c.available / c.per_trade))) * offer.output : null;
+    return {...offer, costs, supported_output: supported};
+  })};
+}
+
+function wikiAcquisitionView(entry, row, snapshot) {
+  const view = element('div', 'wiki-acquisition');
+  view.append(element('p', 'evidence', `GW2 Wiki revision ${entry.revision} · retrieved ${new Date(entry.checked_at).toLocaleString()}. Public results cached up to 6 hours.`));
+  if (snapshot && entry.offers.length) {
+    const budgets = element('details', 'wiki-source-section');
+    budgets.append(element('summary', '', `Compare vendor costs with my storage (${entry.offers.length} offers)`), acquisitionPanel(row, budgetWikiOffers(entry, row, snapshot)));
+    view.append(budgets);
+  }
+  if (!entry.sections.length) view.append(element('p', '', 'No acquisition or notes section was found on this item’s wiki page.'));
+  if (entry.unparsed_offers) view.append(element('p', 'evidence', `${entry.unparsed_offers} vendor offers could not be fully interpreted. Their original costs are shown below without an affordability estimate.`));
+  view.append(element('p', 'evidence', 'Check the notes and conditions below. Vendor eligibility, purchase history and shared limits are not checked.'));
+  for (const section of entry.sections) {
+    const details = element('details', 'wiki-source-section');
+    details.open = ['acquisition', 'overview', 'notes'].includes(section.title.toLowerCase());
+    details.append(element('summary', '', section.title));
+    for (const block of section.blocks) {
+      if (block.kind === 'text') details.append(element('p', '', block.text));
+      else {
+        const scroll = element('div', 'project-table-scroll');
+        scroll.tabIndex = 0;
+        scroll.setAttribute('aria-label', section.title + ' table; scroll sideways for more columns');
+        const table = element('table', 'wiki-source-table');
+        block.rows.forEach((cells, index) => {
+          const tr = element('tr', '');
+          cells.forEach((text, column) => {
+            const span = block.spans?.[index]?.[column];
+            const cell = element((span ? span.header : index === 0) ? 'th' : 'td', '', text);
+            if (span) { cell.colSpan = span.colspan; cell.rowSpan = span.rowspan; }
+            tr.append(cell);
+          });
+          table.append(tr);
+        });
+        scroll.append(table); details.append(scroll);
+      }
+    }
+    view.append(details);
+  }
+  view.append(sourceLink('Source: Guild Wars 2 Wiki contributors', entry.source), document.createTextNode(' · '), sourceLink('GFDL licence', 'https://wiki.guildwars2.com/wiki/Guild_Wars_2_Wiki:Copyrights'));
+  return view;
+}
+
+function acquisitionLookup(row, signal, snapshot) {
+  const panel = element('div', 'acquisition-panel');
+  const load = async () => {
+    const finish = showLookupLoading(panel, 'Loading acquisition methods and vendor costs from the wiki', signal);
+    try {
+      const entry = await api(`/api/acquisition?id=${row.id}`, signal, 60000);
+      if (!signal.aborted) panel.replaceChildren(wikiAcquisitionView(entry, row, snapshot));
+    } catch (error) {
+      if (!signal.aborted) {
+        const retry = element('button', 'secondary', 'Retry wiki lookup');
+        retry.type = 'button'; retry.onclick = load;
+        panel.replaceChildren(element('p', 'lookup-error', error.message), retry);
+      }
+    } finally { finish(); }
+  };
+  return {panel, load};
+}
+
+function prepareItemAcquisition(item) {
+  itemAcquisitionController?.abort();
+  itemAcquisitionController = new AbortController();
+  const details = $('item-acquisition');
+  const lookup = acquisitionLookup(item, itemAcquisitionController.signal);
+  details.open = false;
+  details.replaceChildren(element('summary', '', 'How to obtain this item'), lookup.panel);
+  details.ontoggle = () => { if (details.open) { details.ontoggle = null; lookup.load(); } };
+}
 
 function neededForBifrost(id) {
   if (!bifrostActive) return false;
@@ -48,14 +142,6 @@ function tradeAmount(resource, value) {
 
 function acquisitionPanel(row, entry) {
   const panel = element('div', 'acquisition-panel');
-  const tips = element('div', 'acquisition-tips');
-  for (const tip of entry?.tips || []) {
-    const card = element('section', 'acquisition-tip');
-    card.append(element('h4', '', tip.title), element('p', '', tip.text), sourceLink('Read guide ↗', tip.source));
-    tips.append(card);
-  }
-  if (!tips.childElementCount && row.note) tips.append(element('p', '', row.note));
-  panel.append(tips);
   if (entry?.offers?.length) {
     panel.append(element('h4', '', 'Vendor exchanges'));
     panel.append(element('p', 'evidence', `Each option is an alternative, not a combined budget. Costs below cover all ${row.missing} missing items, across resets if needed. Materials reserved for the direct Bifrost recipe are excluded from spendable balances. Purchase history, vendor access and unlocks are not checked.`));
@@ -63,7 +149,7 @@ function acquisitionPanel(row, entry) {
     for (const offer of entry.offers) {
       const card = element('section', 'vendor-offer');
       const heading = element('div', 'vendor-heading');
-      heading.append(element('h4', '', offer.vendor), element('span', 'vendor-limit', offer.limit == null ? 'No listed purchase limit' : `${offer.limit} / ${offer.period}`));
+      heading.append(element('h4', '', offer.vendor), element('span', 'vendor-limit', offer.limit == null ? 'See source for limits' : `${offer.limit} / ${offer.period}`));
       card.append(heading, element('p', 'vendor-area', offer.area));
       card.append(element('p', '', `Trade output: ${offer.output} × ${row.name}`));
       const coverage = element('p', 'vendor-coverage', offer.supported_output == null ? 'Affordability not fully checked — some balances are unavailable.' : `Resources cover up to ${offer.supported_output} of your missing ${row.missing}, before eligibility and past purchases.`);
@@ -90,9 +176,8 @@ function acquisitionPanel(row, entry) {
       card.append(sourceLink('Vendor & cost source ↗', offer.source));
       offers.append(card);
     }
-    panel.append(offers, element('p', 'evidence', `Offers reviewed ${entry.reviewed}. Recheck the linked vendor page before spending.`));
+    panel.append(offers, element('p', 'evidence', 'Costs imported from the wiki. Read the source conditions below before spending.'));
   }
-  panel.append(sourceLink('All acquisition methods on the wiki ↗', row.source + '#Acquisition'));
   return panel;
 }
 
@@ -154,7 +239,9 @@ function renderBifrost(data) {
       summary.append(projectIcon(row), label, element('span', 'material-needed', `${row.missing.toLocaleString()} to go`));
       const meter = element('progress', 'material-progress'); meter.max = row.required; meter.value = row.allocated;
       meter.setAttribute('aria-label', `${row.name}: ${row.allocated} of ${row.required} allocated`);
-      card.append(summary, meter, acquisitionPanel(row, data.acquisition?.[row.id]));
+      const lookup = acquisitionLookup(row, bifrostController.signal, data);
+      card.ontoggle = () => { if (card.open) { card.ontoggle = null; lookup.load(); } };
+      card.append(summary, meter, lookup.panel);
       list.append(card);
     });
     panel.append(list);

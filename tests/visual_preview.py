@@ -20,7 +20,7 @@ class Preview(FixtureHandler):
         path = self.path.split('?')[0]
         if path == '/app.js':
             mobile = b"\nif (location.search.includes('mobile')) { document.documentElement.style.width='390px'; document.body.style.width='390px'; }"
-            project = b"\nif (location.search.includes('projects')) { showAppView(true); } if (location.search.includes('acquisition')) { const previewTimer = setInterval(() => { const card = [...document.querySelectorAll('.material-card')].find(node => node.querySelector('strong')?.textContent === 'Mystic Clover'); if (card) { clearInterval(previewTimer); card.open = true; const preview = card.cloneNode(true); document.querySelector('main').hidden = true; document.querySelector('.site-header').hidden = true; preview.style.margin = '18px'; document.body.append(preview); window.scrollTo(0, 0); } }, 100); }"
+            project = b"\nif (location.search.includes('projects')) { showAppView(true); } if (location.search.includes('acquisition')) { const previewTimer = setInterval(() => { const card = [...document.querySelectorAll('.material-card')].find(node => node.querySelector('strong')?.textContent === 'Mystic Clover'); if (card) card.open = true; if (card?.querySelector('.wiki-acquisition')) { clearInterval(previewTimer); const preview = card.cloneNode(true); document.querySelector('main').hidden = true; document.querySelector('.site-header').hidden = true; preview.style.margin = '18px'; document.body.append(preview); window.scrollTo(0, 0); } }, 100); }"
             self.send(200, (server.ROOT / 'public/app.js').read_bytes() + mobile + project, 'text/javascript; charset=utf-8')
             return
         data = None
