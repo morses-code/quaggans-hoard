@@ -7,5 +7,6 @@ a = Analysis(['desktop.py'], pathex=[],
     noarchive=False)
 pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name='QuaggansHoard',
+          icon='public/favicon.ico',
           debug=False, bootloader_ignore_signals=False, strip=False, upx=False, console=False)
 coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name='QuaggansHoard')

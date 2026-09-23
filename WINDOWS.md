@@ -38,6 +38,18 @@ For development: `.venv-desktop\Scripts\python.exe desktop.py`.
 The original browser mode still runs with `python server.py` and `.env`.
 The stable browser baseline is on Git branch `main` and tag `web-baseline`.
 
+## Shared development and icons
+
+Browser and desktop modes share `public/app.js`, the HTML/CSS, and Python inventory
+logic. After merging into main, develop common features once on feature branches;
+rebuild the Windows ZIP to deliver them to desktop users. `desktop.py` and
+`public/desktop.js` handle only the Windows shell, credentials and preferences.
+
+`public/quaggan.svg` is the shared header/favicon artwork. `public/favicon.ico`
+provides seven resolutions for the executable, window and browser fallback.
+After changing the SVG, run `build-icons.py` with `resvg_py==0.5.0` installed,
+then rebuild the Windows package. Normal builds use the committed icon files.
+
 Built with pywebview (https://pywebview.flowrl.com/), keyring
 (https://keyring.readthedocs.io/), and PyInstaller (https://pyinstaller.org/).
 GW2 artwork credits are in `_internal/public/art/SOURCES.md`.

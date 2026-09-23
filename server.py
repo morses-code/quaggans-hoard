@@ -111,7 +111,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         url = urlsplit(self.path)
-        static = {"/": ("index.html", "text/html"), "/app.js": ("app.js", "text/javascript"), "/style.css": ("style.css", "text/css")}
+        static = {"/": ("index.html", "text/html"), "/app.js": ("app.js", "text/javascript"), "/style.css": ("style.css", "text/css"),
+                  "/quaggan.svg": ("quaggan.svg", "image/svg+xml"), "/favicon.ico": ("favicon.ico", "image/x-icon")}
         try:
             if url.path in {f'/art/{name}.jpg' for name in ART_PROFESSIONS}:
                 self.send(200, (ROOT / 'public' / url.path.lstrip('/')).read_bytes(), 'image/jpeg')

@@ -105,7 +105,7 @@ class HttpTests(unittest.TestCase):
         cls.thread.join()
 
     def test_static_and_secret_file_protection(self):
-        for path in ['/', '/app.js', '/style.css']:
+        for path in ['/', '/app.js', '/style.css', '/quaggan.svg', '/favicon.ico']:
             with urlopen(self.base + path) as response:
                 self.assertEqual(response.status, 200)
                 self.assertTrue(response.read())

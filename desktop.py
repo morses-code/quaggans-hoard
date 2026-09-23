@@ -174,7 +174,7 @@ def main():
             finally:
                 smoke_report.write_text(json.dumps(result), encoding='utf-8')
                 window.destroy()
-        webview.start(smoke_check if smoke_report else None, gui='edgechromium', private_mode=True, debug=False)
+        webview.start(smoke_check if smoke_report else None, gui='edgechromium', private_mode=True, debug=False, icon=str(server.ROOT / 'public/favicon.ico'))
     finally:
         http.shutdown()
         http.server_close()
