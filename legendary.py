@@ -1,6 +1,6 @@
 """Source-reviewed Bifrost recipe tree and request-local account allocation."""
 import json
-from collections import defaultdict
+from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,22 +14,34 @@ def allocate(holdings, catalog=CATALOG):
     shopping = {}
     needed = set()
 
-    def visit(item_id, required):
+    def reserve(item_id, required):
         item = catalog['nodes'][str(item_id)]
         used = min(required, remaining[item_id])
         remaining[item_id] -= used
         missing = required - used
         needed.add(item_id)
-        children = [visit(part['id'], part['count'] * missing) for part in item['ingredients']] if missing else []
         if not item['ingredients']:
             row = shopping.setdefault(item_id, {**item, 'required': 0, 'allocated': 0, 'missing': 0})
             row['required'] += required
             row['allocated'] += used
             row['missing'] += missing
-        return {**item, 'required': required, 'allocated': used, 'missing': missing,
-                'children': children, 'ready': missing == 0 or bool(children) and all(child['ready'] for child in children)}
+        return {**item, 'required': required, 'allocated': used, 'missing': missing, 'children': []}
 
-    tree = visit(catalog['root'], 1)
+    tree = reserve(catalog['root'], 1)
+    pending = deque([tree])
+    # Reserve each recipe level before expanding deeper subcomponents. Otherwise
+    # a precursor's materials can consume stock needed by the final combination.
+    while pending:
+        node = pending.popleft()
+        if node['missing']:
+            node['children'] = [reserve(part['id'], part['count'] * node['missing']) for part in node['ingredients']]
+            pending.extend(node['children'])
+
+    def finish(node):
+        for child in node['children']:
+            finish(child)
+        node['ready'] = node['missing'] == 0 or bool(node['children']) and all(child['ready'] for child in node['children'])
+    finish(tree)
     return {'tree': tree, 'shopping': sorted(shopping.values(), key=lambda row: row['name']),
             'needed_ids': sorted(needed - {catalog['root']})}
 

@@ -3,6 +3,18 @@ import legendary
 
 
 class BifrostTests(unittest.TestCase):
+    def test_final_recipe_reserves_dust_before_precursor_subrecipes(self):
+        catalog = {'root': 1, 'nodes': {
+            '1': {'id': 1, 'name': 'Final legendary', 'ingredients': [{'id': 2, 'count': 1}, {'id': 24277, 'count': 5}]},
+            '2': {'id': 2, 'name': 'Precursor', 'ingredients': [{'id': 24277, 'count': 250}]},
+            '24277': {'id': 24277, 'name': 'Pile of Crystalline Dust', 'ingredients': []}}}
+        result = legendary.allocate({24277: 30}, catalog)
+        precursor, final_dust = result['tree']['children']
+        self.assertEqual((final_dust['allocated'], final_dust['missing']), (5, 0))
+        self.assertEqual(precursor['children'][0]['allocated'], 25)
+        dust = next(row for row in result['shopping'] if row['id'] == 24277)
+        self.assertEqual((dust['required'], dust['allocated'], dust['missing']), (255, 30, 225))
+
     def test_completed_component_in_material_storage_satisfies_requirement(self):
         def fetch(path, key):
             return [{'id': 19674, 'count': 1}, {'id': 24277, 'count': 300}] if path == '/account/materials' else []

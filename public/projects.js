@@ -409,7 +409,8 @@ function acquisitionPanel(row, entry) {
 function projectOwnedSummary(row, data) {
   const owned = Number(data.holdings?.[row.id] || 0);
   const locations = (data.locations?.[row.id] || []).map(place => `${place.source === 'bags' ? 'On ' : ''}${place.location}: ${place.count.toLocaleString()}`);
-  return [`${data.complete_scan ? 'Owned' : 'Known owned'}: ${owned.toLocaleString()}`, ...locations, ...(data.complete_scan ? [] : ['partial scan'])].join(' · ');
+  const elsewhere = row.missing > 0 ? Math.max(0, owned - row.allocated) : 0;
+  return [`${data.complete_scan ? 'Owned' : 'Known owned'}: ${owned.toLocaleString()}`, ...locations, ...(elsewhere ? [`${elsewhere.toLocaleString()} allocated to other steps`] : []), ...(data.complete_scan ? [] : ['partial scan'])].join(' · ');
 }
 
 function renderBifrost(data) {
@@ -464,7 +465,7 @@ function renderBifrost(data) {
   const missing = data.shopping.filter(row => row.missing > 0);
   if (missing.length) {
     panel.append(element('h2', '', 'Still to collect'));
-    panel.append(element('p', 'evidence', 'Combined quantities for unfinished gifts. Shared ingredients are allocated once. Completed gifts replace their ingredients; clover gambling and precursor crafting costs are not expanded.'));
+    panel.append(element('p', 'evidence', 'Combined quantities for unfinished gifts. Final recipe ingredients are reserved before deeper crafting steps, and shared stock is counted once. Completed gifts replace their ingredients; unexpanded recipes remain acquisition targets.'));
     const list = element('div', 'project-materials');
     missing.forEach(row => {
       const card = element('details', 'material-card');
