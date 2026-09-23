@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Quaggan’s Hoard | Inventory Companion</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body>
+  <header class="site-header"><a class="brand" href="/" aria-label="Quaggan’s Hoard home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64" focusable="false"><path fill="#7fb9b4" d="M12 36C4 27 7 16 17 20 22 6 43 6 48 20 59 16 61 29 53 36L52 45Q32 64 12 45Z"/><ellipse cx="32" cy="39" rx="19" ry="16" fill="#eee0bd"/><ellipse cx="21" cy="29" rx="4" ry="5" fill="#193f43"/><ellipse cx="43" cy="29" rx="4" ry="5" fill="#193f43"/><path d="M27 39Q32 44 37 39" fill="none" stroke="#506b65" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="27" r="1.3" fill="white"/><circle cx="42" cy="27" r="1.3" fill="white"/></svg></span><span class="brand-name">Quaggan’s Hoard<span class="brand-sub">INVENTORY COMPANION</span></span></a><a class="game-link" href="https://www.guildwars2.com/en/" target="_blank" rel="noopener noreferrer">GUILD WARS 2 ↗</a></header>
+  <main>
+    <section class="hero">
+      <img id="hero-art" class="hero-art" alt="" hidden>
+      <div class="hero-bubbles" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="hero-copy"><p class="eyebrow">A LITTLE ORDER FOR YOUR HOARD.</p><h1>Ooo, treasures.<br>Room for more?</h1><p class="hero-description">Keep the precious things. Make room for adventure.</p>
+        <div id="character-profile" class="character-profile"><div class="profession-emblem"><img id="profession-icon" alt="" hidden><span id="profession-fallback">✦</span></div><div><strong id="profile-name">Your next adventure awaits</strong><span id="profile-meta">Choose a character to explore their inventory</span></div></div>
+      </div><span id="art-caption" class="art-caption" hidden>PROFESSION ART · ARENANET</span>
+    </section>
+    <section class="toolbar" aria-label="Inventory controls">
+      <div class="picker"><label for="character">YOUR CHARACTER</label><div class="character-controls"><select id="character" disabled><option>Loading characters…</option></select><button id="save-character" type="button" disabled aria-pressed="false" title="Load this character first on this browser">Make default</button></div></div>
+      <div class="search"><label for="search">SEARCH THE BAGS</label><input id="search" type="search" placeholder="Item name…" disabled></div>
+      <button id="refresh" class="primary-button" type="button">Refresh</button>
+    </section>
+    <p id="character-preference-status" role="status" hidden></p>
+    <section id="analysis-panel" class="analysis-panel" data-state="idle" aria-label="Inventory analysis progress">
+      <div class="analysis-heading"><span class="activity-symbol" aria-hidden="true">✦</span><div><h2 id="analysis-title">Preparing your inventory</h2><p id="analysis-subtitle">Your items appear first. Their uses follow automatically.</p></div><span id="analysis-percent">—</span></div>
+      <div class="analysis-stages">
+        <div class="analysis-stage"><div><span>Crafting recipes</span><strong id="recipes-label">Waiting</strong></div><progress id="recipes-progress" max="100" value="0" aria-label="Crafting recipe checks"></progress></div>
+        <div class="analysis-stage"><div><span>Wiki notes</span><strong id="wiki-label">Waiting</strong></div><progress id="wiki-progress" max="100" value="0" aria-label="Wiki note checks"></progress></div>
+        <div class="analysis-stage"><div><span>Collections &amp; storage</span><strong id="account-label">Waiting</strong></div><progress id="account-progress" max="100" value="0" aria-label="Collection and storage checks"></progress></div>
+      </div><p id="cleanup-status" role="status" aria-live="polite">Connect your account to get started.</p>
+    </section>
+    <nav class="category-tabs" aria-label="Quick category filters">
+      <button type="button" data-filter="equipment"><span class="category-dot equipment-dot"></span><span>Equipment</span><strong id="count-equipment">—</strong></button>
+      <button type="button" data-filter="consumables"><span class="category-dot consumables-dot"></span><span>Consumables</span><strong id="count-consumables">—</strong></button>
+      <button type="button" data-filter="keep"><span class="category-dot keep-dot"></span><span>Keep</span><strong id="count-keep">—</strong></button>
+      <button type="button" data-filter="sell"><span class="category-dot sell-dot"></span><span>Sell / destroy</span><strong id="count-sell">—</strong></button>
+      <button type="button" data-filter="check"><span class="category-dot check-dot"></span><span>Check</span><strong id="count-check">—</strong></button>
+      <button type="button" data-filter="crafting"><span class="category-dot crafting-dot"></span><span>Used in crafting</span><strong id="count-crafting">—</strong></button>
+    </nav>
+    <section class="inventory-section">
+      <div class="inventory-heading"><div><p class="eyebrow">THE ADVENTURER’S PACK</p><h2 id="inventory-title">Your inventory</h2></div><div class="filter-control"><label for="cleanup-filter">SHOW</label><select id="cleanup-filter"><option value="all">All items</option><option value="equipment">Equipment</option><option value="consumables">Consumables</option><option value="keep">Keep</option><option value="sell">Sell / destroy</option><option value="check">Check</option><option value="crafting">Used in crafting</option></select></div></div>
+      <div id="equipment-filters" class="detail-filters" hidden aria-label="Equipment filters">
+        <label>RARITY<select id="gear-rarity"><option value="all">Any rarity</option></select></label>
+        <label>TYPE<select id="gear-type"><option value="all">Any equipment</option></select></label>
+        <label>BINDING<select id="gear-binding"><option value="all">Any binding</option><option value="unbound">Unbound</option><option value="Account">Account bound</option><option value="Character">Soulbound</option></select></label>
+        <label>MIN LEVEL<input id="gear-min" type="number" min="0" max="80" placeholder="0"></label>
+        <label>MAX LEVEL<input id="gear-max" type="number" min="0" max="80" placeholder="80"></label>
+        <button id="gear-reset" type="button">Reset</button>
+      </div>
+      <div id="consumable-filters" class="detail-filters" hidden><label>CONSUMABLE TYPE<select id="consumable-type"><option value="all">All consumables</option></select></label></div>
+      <div class="space-controls"><label for="space-filter">FIND SPACE</label><select id="space-filter"><option value="all">All items</option><option value="duplicates">Multiple bag slots</option><option value="combine">Stacks to combine</option><option value="overflow">Material overflow</option><option value="elsewhere">Also stored elsewhere</option></select><span id="space-summary" role="status">Load a character to check storage.</span></div>
+      <section id="summary" hidden><span id="name"></span><div class="capacity"><strong id="capacity"></strong><span> slots occupied</span></div></section>
+      <div id="status" role="status" aria-live="polite">Connecting to Tyria…</div>
+      <div id="inventory-loading" class="inventory-loading" hidden><span class="spinner" aria-hidden="true"></span><strong>Opening your bags…</strong><p>Retrieving items from Guild Wars 2</p><div class="skeleton-grid" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+      <div id="bags"></div>
+    </section>
+    <footer><span class="footer-brand">Quaggan’s Hoard<span>INVENTORY COMPANION · A HOME FOR YOUR TREASURES</span></span><p>A fan-made, read-only companion. Guild Wars 2 artwork © ArenaNet.<br>Game data can take a few minutes to update.</p></footer>
+  </main>
+  <dialog id="item-dialog" aria-labelledby="item-title" aria-describedby="item-description">
+    <form method="dialog" class="dialog-close"><span>ITEM INSPECTOR</span><button aria-label="Close item details" autofocus>Close <span aria-hidden="true">×</span></button></form>
+    <div class="item-hero"><img id="detail-icon" alt="" hidden><div><p class="eyebrow">FROM YOUR INVENTORY</p><h2 id="item-title"></h2><p id="item-meta"></p></div></div>
+    <p id="item-description"></p><dl id="item-stats"></dl>
+    <section id="account-finder" class="action-detail"><h3>Find across account</h3><button id="find-item" class="uses-retry" type="button">Find matching copies</button><div id="item-locations" role="status"></div></section>
+    <section id="item-uses" aria-label="Item uses and storage" aria-live="polite"></section><section id="item-cleanup" aria-label="Cleanup guidance"></section>
+  </dialog>
+</body></html>
