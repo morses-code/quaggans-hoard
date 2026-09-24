@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+trap 'echo "::error title=Linux package failure::Command failed at line ${LINENO}: ${BASH_COMMAND}"' ERR
 
 version="${1:-0.0.0}"
 [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.][0-9]+)?$ ]] || { echo "Use a numeric version such as 1.0.0" >&2; exit 1; }
