@@ -172,15 +172,29 @@ def main():
     import keyring
     directory = data_directory()
     smoke_report = Path(sys.argv[2]) if len(sys.argv) == 3 and sys.argv[1] == '--smoke-test' else None
+    package_report = Path(sys.argv[2]) if len(sys.argv) == 3 and sys.argv[1] == '--package-smoke-test' else None
     # Packaging diagnostics never read or write a real user's credential.
     class EmptyVault:
         def get_password(self, *args):
             return None
-    state = DesktopState(EmptyVault() if smoke_report else keyring, directory)
+    state = DesktopState(EmptyVault() if smoke_report or package_report else keyring, directory)
     http, url = create_server(state)
     thread = threading.Thread(target=http.serve_forever, daemon=True)
     thread.start()
     try:
+        if package_report:
+            from http.cookiejar import CookieJar
+            from urllib.request import build_opener, HTTPCookieProcessor
+            result = {'passed': False}
+            try:
+                client = build_opener(HTTPCookieProcessor(CookieJar()))
+                html = client.open(url, timeout=10).read()
+                state_data = json.load(client.open(f'http://127.0.0.1:{http.server_port}/desktop/state', timeout=10))
+                result['passed'] = b'/desktop.js' in html and state_data['platform'] == platform_details()[0]
+            except Exception as error:
+                result['error'] = type(error).__name__
+            package_report.write_text(json.dumps(result), encoding='utf-8')
+            return
         webview.settings['ALLOW_FILE_URLS'] = False
         webview.settings['OPEN_EXTERNAL_LINKS_IN_BROWSER'] = True
         window = webview.create_window("Quaggan's Hoard", url, width=1280, height=900, min_size=(720, 600), background_color='#17383d', text_select=True, hidden=bool(smoke_report))

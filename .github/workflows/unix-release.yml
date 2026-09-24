@@ -67,7 +67,7 @@ jobs:
         if: startsWith(matrix.platform, 'macOS')
         run: |
           report="$RUNNER_TEMP/macos-smoke.json"
-          open -W "dist/Quaggan's Hoard.app" --args --smoke-test "$report"
+          "dist/Quaggan's Hoard.app/Contents/MacOS/QuaggansHoard" --package-smoke-test "$report"
           [[ -f "$report" ]] || { echo '::error title=macOS smoke failure::The packaged app closed without producing its smoke-test report.'; exit 1; }
           python -c "import json; assert json.load(open('$report'))['passed']"
       - name: Smoke test Linux package
