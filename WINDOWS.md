@@ -1,7 +1,10 @@
 # Quaggan's Hoard for Windows
 
-For the simplest setup, download `QuaggansHoard-Setup-<version>.exe` from the
-GitHub release and run it. The per-user installer needs no administrator access,
+For the simplest setup, open the
+[latest GitHub release](https://github.com/morses-code/quaggans-hoard/releases/latest),
+download `QuaggansHoard-Setup-<version>.exe`, and double-click that downloaded
+`.exe`. Do not open `installer/QuaggansHoard.iss`; that is source code used by
+developers to create the installer. The per-user installer needs no administrator access,
 creates a Start Menu shortcut, offers an optional desktop shortcut, and includes
 an uninstaller. The portable ZIP remains available: extract the entire ZIP, then
 double-click **QuaggansHoard.exe** inside its folder.

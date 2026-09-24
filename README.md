@@ -1,5 +1,12 @@
 # Quaggan’s Hoard · Inventory Companion
 
+## Install on Windows
+
+Download **QuaggansHoard-Setup-0.1.0.exe** from the
+[latest GitHub release](https://github.com/morses-code/quaggans-hoard/releases/latest)
+and double-click the downloaded `.exe`. Files ending in `.iss` are installer
+source code for developers and are not used to install the app.
+
 Windows desktop development is on `windows-app`; the original working browser app
 is preserved on `main` and tag `web-baseline`. See [Windows setup and packaging](WINDOWS.md).
 The desktop build uses Windows Credential Manager instead of `.env` and includes

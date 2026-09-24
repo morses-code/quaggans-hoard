@@ -1,5 +1,7 @@
 #ifndef AppVersion
-  #define AppVersion "0.0.0-dev"
+  ; Keep this numeric because Windows file-version metadata only accepts
+  ; dot-separated numbers. Release builds override it via build-installer.ps1.
+  #define AppVersion "0.0.0"
 #endif
 
 #define AppName "Quaggan's Hoard"
