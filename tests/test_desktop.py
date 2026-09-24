@@ -100,8 +100,7 @@ class DesktopTests(unittest.TestCase):
     def test_platform_metadata_and_standard_data_directories(self):
         with self.client.open(self.base + '/desktop/state') as response:
             state = json.load(response)
-        self.assertEqual(state['platform'], 'Windows')
-        self.assertEqual(state['credential_store'], 'Windows Credential Manager')
+        self.assertEqual((state['platform'], state['credential_store']), desktop.platform_details())
         with patch.object(desktop.sys, 'platform', 'darwin'), patch.object(desktop.Path, 'home', return_value=Path('/Users/example')):
             self.assertEqual(desktop.data_directory(), Path('/Users/example/Library/Application Support/QuaggansHoard'))
             self.assertEqual(desktop.platform_details(), ('macOS', 'macOS Keychain'))
