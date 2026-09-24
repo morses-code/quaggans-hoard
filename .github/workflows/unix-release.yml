@@ -72,12 +72,10 @@ jobs:
           python -c "import json; assert json.load(open('$report'))['passed']"
       - name: Smoke test Linux package
         if: matrix.platform == 'Linux'
-        env:
-          QT_QPA_PLATFORM: offscreen
-          QTWEBENGINE_DISABLE_SANDBOX: '1'
         run: |
           report="$RUNNER_TEMP/linux-smoke.json"
-          timeout 60s ./dist/QuaggansHoard/QuaggansHoard --smoke-test "$report"
+          ./dist/QuaggansHoard/QuaggansHoard --package-smoke-test "$report"
+          [[ -f "$report" ]] || { echo '::error title=Linux smoke failure::The packaged app closed without producing its smoke-test report.'; exit 1; }
           python -c "import json; assert json.load(open('$report'))['passed']"
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
