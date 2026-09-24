@@ -18,7 +18,8 @@ async function desktopBoot() {
   }
   const settings = document.createElement('section');
   settings.className = 'desktop-account';
-  settings.innerHTML = `<div class="desktop-account-heading"><span>${state.platform.toUpperCase()} EDITION</span><button id="account-settings" type="button">Account settings</button></div>
+  settings.innerHTML = `<div class="desktop-account-heading"><span>${state.platform.toUpperCase()} EDITION · VERSION ${state.version}</span><div class="desktop-heading-actions"><button id="check-updates" type="button">Check for updates</button><button id="account-settings" type="button">Account settings</button></div></div>
+    <div id="update-notice" class="desktop-update" role="status" hidden></div>
     <form id="connect-form" hidden><h2>Your hoard, on your computer.</h2>
     <p>Create a Guild Wars 2 API key with <strong>account, characters, inventories and progression</strong> permissions. Also enable <strong>wallet</strong> for legendary vendor currency checks. Your key is saved in ${state.credential_store} for your operating-system user. It is sent only to the official Guild Wars 2 API.</p>
     <p><a href="https://account.arena.net/applications" target="_blank" rel="noopener noreferrer">Create or manage your API keys ↗</a></p>
@@ -28,6 +29,27 @@ async function desktopBoot() {
   document.querySelector('main').prepend(settings);
   const form = document.getElementById('connect-form');
   const status = document.getElementById('connection-status');
+  const updateNotice = document.getElementById('update-notice');
+  const updateButton = document.getElementById('check-updates');
+  const checkForUpdates = async (manual = false) => {
+    updateButton.disabled = true;
+    if (manual) { updateNotice.hidden = false; updateNotice.className = 'desktop-update checking'; updateNotice.textContent = 'Checking for updates…'; }
+    try {
+      const update = await desktopRequest('/desktop/update');
+      if (update.update_available) {
+        updateNotice.hidden = false;
+        updateNotice.className = 'desktop-update available';
+        updateNotice.innerHTML = `<div><strong>Quaggan’s Hoard ${update.latest_version} is available.</strong><span>You currently have ${update.current_version}.</span></div><a href="${update.release_url}" target="_blank" rel="noopener noreferrer">Download update ↗</a>`;
+      } else if (manual) {
+        updateNotice.className = 'desktop-update current';
+        updateNotice.innerHTML = `<strong>You’re up to date.</strong><span>Version ${update.current_version} is the latest release.</span>`;
+      }
+    } catch (error) {
+      if (manual) { updateNotice.className = 'desktop-update failed'; updateNotice.textContent = error.message; }
+    } finally { updateButton.disabled = false; }
+  };
+  updateButton.onclick = () => checkForUpdates(true);
+  checkForUpdates();
   const showForm = () => {
     form.hidden = false;
     document.getElementById('forget-key').hidden = !state.connected;

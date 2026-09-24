@@ -41,6 +41,8 @@ Create an API key on the [ArenaNet Applications page](https://account.arena.net/
 
 Paste the key into Quaggan's Hoard when prompted. It is kept in Windows Credential Manager, macOS Keychain, or your Linux desktop keyring and sent only to the official Guild Wars 2 API. Use **Account settings** to replace or forget it. The app does not store your ArenaNet password.
 
+The desktop app checks GitHub Releases when it starts. Its account bar shows the installed version and displays a download link when a newer release is available. Use **Check for updates** there to run the check again at any time.
+
 ## User guide
 
 ### Review a character's inventory

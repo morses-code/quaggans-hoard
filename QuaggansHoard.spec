@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 from PyInstaller.utils.hooks import collect_data_files
 
 is_windows = sys.platform == 'win32'
@@ -7,9 +8,12 @@ is_macos = sys.platform == 'darwin'
 icon = 'public/favicon.ico' if is_windows else 'public/quaggan.icns' if is_macos else 'public/quaggan-512.png'
 hidden = ['keyring.backends.Windows'] if is_windows else ['keyring.backends.macOS'] if is_macos else ['keyring.backends.SecretService']
 app_version = os.environ.get('APP_VERSION', '0.0.0')
+version_file = Path('build/app-version.txt')
+version_file.parent.mkdir(parents=True, exist_ok=True)
+version_file.write_text(app_version, encoding='utf-8')
 
 a = Analysis(['desktop.py'], pathex=[],
-    datas=[('public', 'public')] + collect_data_files('webview'),
+    datas=[('public', 'public'), (str(version_file), '.')] + collect_data_files('webview'),
     hiddenimports=hidden,
     excludes=(['PyQt5', 'PyQt6', 'PySide2', 'PySide6', 'tkinter'] if not sys.platform.startswith('linux') else ['PyQt5', 'PySide2', 'PySide6', 'tkinter']),
     noarchive=False)

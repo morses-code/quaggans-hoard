@@ -107,3 +107,17 @@ class DesktopTests(unittest.TestCase):
         with patch.object(desktop.sys, 'platform', 'linux'), patch.dict(desktop.os.environ, {'XDG_DATA_HOME': '/tmp/share'}):
             self.assertEqual(desktop.data_directory(), Path('/tmp/share/QuaggansHoard'))
             self.assertEqual(desktop.platform_details(), ('Linux', 'your desktop keyring'))
+
+    def test_desktop_reports_version_and_update_status(self):
+        with patch.object(desktop, 'app_version', return_value='1.2.3'):
+            with self.client.open(self.base + '/desktop/state') as response:
+                self.assertEqual(json.load(response)['version'], '1.2.3')
+        update = {'current_version': '1.2.3', 'latest_version': '1.3.0',
+                  'update_available': True, 'release_url': desktop.RELEASES_URL}
+        with patch.object(desktop, 'latest_release', return_value=update):
+            with self.client.open(self.base + '/desktop/update') as response:
+                self.assertEqual(json.load(response), update)
+
+    def test_version_comparison_handles_release_tags(self):
+        self.assertGreater(desktop.version_tuple('v1.10.0'), desktop.version_tuple('1.9.9'))
+        self.assertEqual(desktop.version_tuple('invalid'), ())

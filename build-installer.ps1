@@ -8,7 +8,7 @@ $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
 
 if (-not $SkipApplicationBuild) {
-    & "$PSScriptRoot\build-windows.ps1"
+    & "$PSScriptRoot\build-windows.ps1" $Version
     if ($LASTEXITCODE -ne 0) { throw 'Application packaging failed.' }
 }
 

@@ -9,11 +9,48 @@ import time
 import subprocess
 from http.cookies import SimpleCookie
 from pathlib import Path
+from urllib.request import Request, urlopen
 
 import server
 
 SERVICE = 'QuaggansHoard'
+RELEASE_API = 'https://api.github.com/repos/morses-code/quaggans-hoard/releases/latest'
+RELEASES_URL = 'https://github.com/morses-code/quaggans-hoard/releases/latest'
 PREFERENCE_KEYS = {'tyria.defaultCharacter', 'quaggansHoard.protectedItems', 'quaggansHoard.bifrostActive', 'quaggansHoard.selectedLegendary', 'quaggansHoard.trackedLegendary', 'quaggansHoard.trackedRecipe'}
+
+
+def app_version():
+    root = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parent))
+    try:
+        value = (root / 'app-version.txt').read_text(encoding='utf-8').strip()
+        if value and all(part.isdigit() for part in value.split('.')):
+            return value
+    except OSError:
+        pass
+    return '0.0.0'
+
+
+def version_tuple(value):
+    try:
+        parts = tuple(int(part) for part in value.removeprefix('v').split('.'))
+        return parts + (0,) * (4 - len(parts)) if 3 <= len(parts) <= 4 else ()
+    except (AttributeError, ValueError):
+        return ()
+
+
+def latest_release():
+    request = Request(RELEASE_API, headers={'Accept': 'application/vnd.github+json',
+                                            'User-Agent': 'Quaggans-Hoard-update-check'})
+    with urlopen(request, timeout=8) as response:
+        data = json.load(response)
+    tag = data.get('tag_name', '') if isinstance(data, dict) else ''
+    latest = tag.removeprefix('v')
+    if not version_tuple(latest):
+        raise ValueError('The release service returned an invalid version.')
+    current = app_version()
+    return {'current_version': current, 'latest_version': latest,
+            'update_available': version_tuple(latest) > version_tuple(current),
+            'release_url': RELEASES_URL}
 
 
 def platform_details():
@@ -120,8 +157,14 @@ def create_server(state):
                 with state.lock:
                     platform_name, credential_store = platform_details()
                     data = {'connected': bool(state.key), 'preferences': state.preferences.copy(),
-                            'platform': platform_name, 'credential_store': credential_store}
+                            'platform': platform_name, 'credential_store': credential_store,
+                            'version': app_version()}
                 self.send(200, json.dumps(data).encode(), 'application/json')
+            elif path == '/desktop/update':
+                try:
+                    self.send(200, json.dumps(latest_release()).encode(), 'application/json')
+                except Exception:
+                    self.send(503, b'{"error":"Could not check for updates. Check your connection and try again."}', 'application/json')
             elif path == '/desktop.js':
                 self.send(200, (server.ROOT / 'public/desktop.js').read_bytes(), 'text/javascript; charset=utf-8')
             elif path == '/':

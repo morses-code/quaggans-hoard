@@ -6,7 +6,7 @@ version="${1:-0.0.0}"
 [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.][0-9]+)?$ ]] || { echo "Use a numeric version such as 1.0.0" >&2; exit 1; }
 
 python3 -m pip install -r requirements-desktop.txt
-python3 -m PyInstaller --noconfirm --clean QuaggansHoard.spec
+APP_VERSION="$version" python3 -m PyInstaller --noconfirm --clean QuaggansHoard.spec
 
 appdir="build/AppDir"
 rm -rf "$appdir"
