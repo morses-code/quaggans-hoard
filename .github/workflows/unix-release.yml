@@ -2,8 +2,19 @@ name: macOS and Linux release
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*.*.*'
+    paths:
+      - '.github/workflows/unix-release.yml'
+      - 'desktop.py'
+      - 'QuaggansHoard.spec'
+      - 'requirements-desktop.txt'
+      - 'build-macos.sh'
+      - 'build-linux.sh'
+      - 'public/desktop.js'
+      - 'public/quaggan-512.png'
   workflow_dispatch:
     inputs:
       version:
@@ -40,7 +51,7 @@ jobs:
       - name: Select version
         shell: bash
         run: |
-          if [[ '${{ github.ref_type }}' == tag ]]; then version='${{ github.ref_name }}'; version="${version#v}"; else version='${{ inputs.version }}'; fi
+          if [[ '${{ github.ref_type }}' == tag ]]; then version='${{ github.ref_name }}'; version="${version#v}"; else version='${{ inputs.version }}'; version="${version:-0.0.0}"; fi
           [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.][0-9]+)?$ ]] || { echo "Invalid version: $version"; exit 1; }
           echo "RELEASE_VERSION=$version" >> "$GITHUB_ENV"
       - name: Run tests
