@@ -8,16 +8,24 @@ _Inventory view shown with demo data._
 
 The app runs on your own computer. It never moves, sells, destroys, or crafts anything in your account.
 
-## Install the Windows app
+## Install the desktop app
 
 1. Open the [latest release](https://github.com/morses-code/quaggans-hoard/releases/latest).
-2. Under **Assets**, download `QuaggansHoard-Setup-<version>.exe`.
-3. Double-click the downloaded `.exe` and follow the setup wizard.
-4. Open **Quaggan's Hoard** from the Start menu or its desktop shortcut.
+2. Under **Assets**, download the file for your computer.
+
+| Platform | Recommended download | Installation |
+| --- | --- | --- |
+| Windows 10/11 x64 | `QuaggansHoard-Setup-<version>.exe` | Open the installer and follow the setup wizard. |
+| macOS 15 or newer, Apple silicon | `QuaggansHoard-macOS-arm64.dmg` | Open the disk image and copy **Quaggan's Hoard** to Applications. |
+| macOS 15 or newer, Intel | `QuaggansHoard-macOS-x86_64.dmg` | Open the disk image and copy **Quaggan's Hoard** to Applications. |
+| Linux x86-64 | `QuaggansHoard-Linux-x86_64.AppImage` | Make it executable and run it. |
+| Debian/Ubuntu x86-64 | `QuaggansHoard-Linux-amd64.deb` | Open it with your software installer or use `sudo apt install ./QuaggansHoard-Linux-amd64.deb`. |
 
 The `.iss` file in the repository is installer source code for developers. You do not need it to install the app.
 
-Windows may show an **Unknown publisher** warning because the current installer is not code-signed. Windows 10 or 11 x64 and the Microsoft Edge WebView2 Runtime are required. Most current Windows installations already include WebView2; if yours does not, download the [Evergreen Runtime from Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/).
+The current builds are unsigned. Windows may show **Unknown publisher**, and macOS may require you to approve the app in **System Settings → Privacy & Security**. Linux AppImage users can enable execution with `chmod +x QuaggansHoard-Linux-x86_64.AppImage`.
+
+Windows requires Microsoft Edge WebView2 Runtime. Most current installations already include it; if yours does not, download the [Evergreen Runtime from Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/). Linux requires a desktop Secret Service provider such as GNOME Keyring or KDE Wallet to store the API key securely.
 
 The portable `QuaggansHoard-Windows.zip` is also available on the release page. Extract the entire archive and run `QuaggansHoard.exe`; keep the `_internal` folder beside it.
 
@@ -31,7 +39,7 @@ Create an API key on the [ArenaNet Applications page](https://account.arena.net/
 - `progression`
 - `wallet`
 
-Paste the key into Quaggan's Hoard when prompted. In the Windows app it is kept in Windows Credential Manager for your Windows user and sent only to the official Guild Wars 2 API. Use **Account settings** to replace or forget it. The app does not store your ArenaNet password.
+Paste the key into Quaggan's Hoard when prompted. It is kept in Windows Credential Manager, macOS Keychain, or your Linux desktop keyring and sent only to the official Guild Wars 2 API. Use **Account settings** to replace or forget it. The app does not store your ArenaNet password.
 
 ## User guide
 
@@ -161,7 +169,8 @@ The server listens only on your computer. `.env` is excluded from Git. An existi
 
 ## Troubleshooting
 
-- **The app does not open:** install or repair Microsoft Edge WebView2 Runtime, then try again.
+- **The Windows app does not open:** install or repair Microsoft Edge WebView2 Runtime, then try again.
+- **Linux cannot save the key:** unlock or install your desktop keyring, then reopen the app. The key is never silently written to a plain-text preference file.
 - **Characters or account data are missing:** confirm the API key has all five permissions listed above, then replace it in Account settings.
 - **Recent changes are not visible:** select **Update data now** and allow a few minutes for the Guild Wars 2 API to catch up.
 - **A check failed:** confirm internet access and retry. Failed sources remain unknown rather than being treated as empty.
@@ -174,6 +183,6 @@ Run the automated tests with:
 python -m unittest discover -s tests -v
 ```
 
-Windows build, packaging, release, and security details are documented in [WINDOWS.md](WINDOWS.md). Artwork attribution is in [public/art/SOURCES.md](public/art/SOURCES.md).
+Windows build details are documented in [WINDOWS.md](WINDOWS.md). Cross-platform builds use `build-macos.sh`, `build-linux.sh`, and the macOS/Linux release workflow. Artwork attribution is in [public/art/SOURCES.md](public/art/SOURCES.md).
 
 Quaggan's Hoard is a fan-made tool and is not affiliated with ArenaNet. Guild Wars 2 and its artwork are trademarks or property of their respective owners.

@@ -1,0 +1,90 @@
+name: macOS and Linux release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version for a test build, such as 1.0.0
+        required: false
+        default: 0.0.0
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            platform: macOS-arm64
+          - os: macos-15-intel
+            platform: macOS-x86_64
+          - os: ubuntu-22.04
+            platform: Linux
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-desktop.txt
+      - name: Select version
+        shell: bash
+        run: |
+          if [[ '${{ github.ref_type }}' == tag ]]; then version='${{ github.ref_name }}'; version="${version#v}"; else version='${{ inputs.version }}'; fi
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.][0-9]+)?$ ]] || { echo "Invalid version: $version"; exit 1; }
+          echo "RELEASE_VERSION=$version" >> "$GITHUB_ENV"
+      - name: Run tests
+        run: python -m unittest discover -s tests -q
+      - name: Build macOS application
+        if: startsWith(matrix.platform, 'macOS')
+        run: bash ./build-macos.sh "$RELEASE_VERSION"
+      - name: Build Linux applications
+        if: matrix.platform == 'Linux'
+        run: bash ./build-linux.sh "$RELEASE_VERSION"
+      - name: Smoke test macOS package
+        if: startsWith(matrix.platform, 'macOS')
+        run: |
+          report="$RUNNER_TEMP/macos-smoke.json"
+          "dist/Quaggan's Hoard.app/Contents/MacOS/QuaggansHoard" --smoke-test "$report"
+          python -c "import json; assert json.load(open('$report'))['passed']"
+      - name: Smoke test Linux package
+        if: matrix.platform == 'Linux'
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QTWEBENGINE_DISABLE_SANDBOX: '1'
+        run: |
+          report="$RUNNER_TEMP/linux-smoke.json"
+          timeout 60s ./dist/QuaggansHoard/QuaggansHoard --smoke-test "$report"
+          python -c "import json; assert json.load(open('$report'))['passed']"
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuaggansHoard-${{ matrix.platform }}-${{ env.RELEASE_VERSION }}
+          if-no-files-found: error
+          path: |
+            dist/QuaggansHoard-macOS-*.dmg
+            dist/QuaggansHoard-macOS-*.zip
+            dist/QuaggansHoard-Linux-x86_64.AppImage
+            dist/QuaggansHoard-Linux-amd64.deb
+      - name: Publish tagged release assets
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release view '${{ github.ref_name }}' >/dev/null 2>&1 || gh release create '${{ github.ref_name }}' --generate-notes --title "Quaggan's Hoard $RELEASE_VERSION" || gh release view '${{ github.ref_name }}'
+          if [[ '${{ matrix.platform }}' == macOS-* ]]; then
+            gh release upload '${{ github.ref_name }}' dist/QuaggansHoard-macOS-*.dmg dist/QuaggansHoard-macOS-*.zip --clobber
+          else
+            gh release upload '${{ github.ref_name }}' dist/QuaggansHoard-Linux-x86_64.AppImage dist/QuaggansHoard-Linux-amd64.deb --clobber
+          fi

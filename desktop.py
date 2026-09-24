@@ -1,4 +1,4 @@
-"""Windows entry point. Browser mode remains available through server.py."""
+"""Cross-platform desktop entry point. Browser mode remains available through server.py."""
 import ctypes
 import json
 import os
@@ -6,6 +6,7 @@ import secrets
 import sys
 import threading
 import time
+import subprocess
 from http.cookies import SimpleCookie
 from pathlib import Path
 
@@ -13,6 +14,22 @@ import server
 
 SERVICE = 'QuaggansHoard'
 PREFERENCE_KEYS = {'tyria.defaultCharacter', 'quaggansHoard.protectedItems', 'quaggansHoard.bifrostActive', 'quaggansHoard.selectedLegendary', 'quaggansHoard.trackedLegendary', 'quaggansHoard.trackedRecipe'}
+
+
+def platform_details():
+    if sys.platform == 'win32':
+        return 'Windows', 'Windows Credential Manager'
+    if sys.platform == 'darwin':
+        return 'macOS', 'macOS Keychain'
+    return 'Linux', 'your desktop keyring'
+
+
+def data_directory():
+    if sys.platform == 'win32':
+        return Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local')) / 'QuaggansHoard'
+    if sys.platform == 'darwin':
+        return Path.home() / 'Library' / 'Application Support' / 'QuaggansHoard'
+    return Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local' / 'share')) / 'QuaggansHoard'
 
 
 class DesktopState:
@@ -101,7 +118,9 @@ def create_server(state):
                 return
             if path == '/desktop/state':
                 with state.lock:
-                    data = {'connected': bool(state.key), 'preferences': state.preferences.copy()}
+                    platform_name, credential_store = platform_details()
+                    data = {'connected': bool(state.key), 'preferences': state.preferences.copy(),
+                            'platform': platform_name, 'credential_store': credential_store}
                 self.send(200, json.dumps(data).encode(), 'application/json')
             elif path == '/desktop.js':
                 self.send(200, (server.ROOT / 'public/desktop.js').read_bytes(), 'text/javascript; charset=utf-8')
@@ -141,7 +160,7 @@ def create_server(state):
             except (ValueError, TimeoutError):
                 self.send(400, b'{"error":"Invalid or incomplete request."}', 'application/json')
             except Exception:
-                self.send(500, b'{"error":"Windows could not save this change. Please retry."}', 'application/json')
+                self.send(500, b'{"error":"The operating system could not save this change. Please retry."}', 'application/json')
 
     http = server.ThreadingHTTPServer(('127.0.0.1', 0), DesktopHandler)
     http.daemon_threads = True
@@ -150,14 +169,14 @@ def create_server(state):
 
 def main():
     import webview
-    from keyring.backends.Windows import WinVaultKeyring
-    directory = Path(os.environ['LOCALAPPDATA']) / 'QuaggansHoard'
+    import keyring
+    directory = data_directory()
     smoke_report = Path(sys.argv[2]) if len(sys.argv) == 3 and sys.argv[1] == '--smoke-test' else None
     # Packaging diagnostics never read or write a real user's credential.
     class EmptyVault:
         def get_password(self, *args):
             return None
-    state = DesktopState(EmptyVault() if smoke_report else WinVaultKeyring(), directory)
+    state = DesktopState(EmptyVault() if smoke_report else keyring, directory)
     http, url = create_server(state)
     thread = threading.Thread(target=http.serve_forever, daemon=True)
     thread.start()
@@ -178,15 +197,31 @@ def main():
             finally:
                 smoke_report.write_text(json.dumps(result), encoding='utf-8')
                 window.destroy()
-        webview.start(smoke_check if smoke_report else None, gui='edgechromium', private_mode=True, debug=False, icon=str(server.ROOT / 'public/favicon.ico'))
+        gui = {'win32': 'edgechromium', 'darwin': 'cocoa'}.get(sys.platform, 'qt')
+        icon = str(server.ROOT / 'public' / ('favicon.ico' if sys.platform == 'win32' else 'quaggan-512.png'))
+        webview.start(smoke_check if smoke_report else None, gui=gui, private_mode=True, debug=False, icon=icon)
     finally:
         http.shutdown()
         http.server_close()
+
+
+def show_startup_error():
+    platform_name, credential_store = platform_details()
+    message = f"Quaggan's Hoard could not start. Check that the system web view and {credential_store} are available."
+    if sys.platform == 'win32':
+        ctypes.windll.user32.MessageBoxW(None, message + ' Install Microsoft Edge WebView2 Runtime if needed.', "Quaggan's Hoard", 0x10)
+    elif sys.platform == 'darwin':
+        subprocess.run(['osascript', '-e', f'display alert "Quaggan\'s Hoard" message {json.dumps(message)} as critical'], check=False)
+    else:
+        try:
+            subprocess.run(['zenity', '--error', '--title', "Quaggan's Hoard", '--text', message], check=False)
+        except OSError:
+            print(f'{platform_name}: {message}', file=sys.stderr)
 
 
 if __name__ == '__main__':
     try:
         main()
     except Exception:
-        ctypes.windll.user32.MessageBoxW(None, 'Quaggan\'s Hoard could not start. Install the Microsoft Edge WebView2 Runtime and try again. Windows Credential Manager must also be available.', "Quaggan's Hoard", 0x10)
+        show_startup_error()
         sys.exit(1)

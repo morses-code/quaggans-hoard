@@ -1,3 +1,5 @@
-pywebview==6.2.1
+pywebview==6.2.1; sys_platform != 'linux'
+pywebview[qt]==6.2.1; sys_platform == 'linux'
 keyring==25.7.0
 pyinstaller==6.22.3
+secretstorage==3.5.0; sys_platform == 'linux'
