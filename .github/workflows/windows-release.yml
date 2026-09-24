@@ -1,0 +1,106 @@
+name: Windows release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version for a test build, such as 1.0.0
+        required: false
+        default: 0.0.0
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-desktop.txt
+
+      - name: Select version
+        shell: pwsh
+        run: |
+          if ('${{ github.ref_type }}' -eq 'tag') {
+            $releaseVersion = '${{ github.ref_name }}'.TrimStart('v')
+          } else {
+            $releaseVersion = '${{ inputs.version }}'
+          }
+          if ($releaseVersion -notmatch '^\d+\.\d+\.\d+(?:\.\d+)?$') {
+            throw "Use a numeric version such as v1.0.0, received: $releaseVersion"
+          }
+          "RELEASE_VERSION=$releaseVersion" >> $env:GITHUB_ENV
+
+      - name: Run tests
+        shell: pwsh
+        run: python -m unittest discover -s tests -q
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+
+      - name: Build portable app and installer
+        shell: pwsh
+        run: .\build-installer.ps1 -Version $env:RELEASE_VERSION
+
+      - name: Smoke test packaged app
+        shell: pwsh
+        run: |
+          $report = Join-Path $env:RUNNER_TEMP 'portable-smoke.json'
+          $process = Start-Process -FilePath '.\dist\QuaggansHoard\QuaggansHoard.exe' -ArgumentList @('--smoke-test', $report) -WindowStyle Hidden -PassThru
+          if (-not $process.WaitForExit(45000)) { Stop-Process -Id $process.Id; throw 'Portable app smoke test timed out.' }
+          if ($process.ExitCode -ne 0 -or -not (Test-Path $report)) { throw 'Portable app smoke test failed.' }
+          $result = Get-Content $report -Raw | ConvertFrom-Json
+          if (-not $result.passed) { throw 'Portable app smoke test did not pass.' }
+
+      - name: Smoke test installer
+        shell: pwsh
+        run: |
+          $installDir = Join-Path $env:RUNNER_TEMP 'QuaggansHoard-Installed'
+          $installer = ".\dist\QuaggansHoard-Setup-$env:RELEASE_VERSION.exe"
+          $install = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=$installDir") -Wait -PassThru
+          if ($install.ExitCode -ne 0) { throw "Installer exited with $($install.ExitCode)." }
+          $report = Join-Path $env:RUNNER_TEMP 'installer-smoke.json'
+          $app = Join-Path $installDir 'QuaggansHoard.exe'
+          $process = Start-Process -FilePath $app -ArgumentList @('--smoke-test', $report) -WindowStyle Hidden -PassThru
+          if (-not $process.WaitForExit(45000)) { Stop-Process -Id $process.Id; throw 'Installed app smoke test timed out.' }
+          if ($process.ExitCode -ne 0 -or -not (Test-Path $report)) { throw 'Installed app smoke test failed.' }
+          $uninstaller = Join-Path $installDir 'unins000.exe'
+          $uninstall = Start-Process -FilePath $uninstaller -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART') -Wait -PassThru
+          if ($uninstall.ExitCode -ne 0) { throw "Uninstaller exited with $($uninstall.ExitCode)." }
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuaggansHoard-Windows-${{ env.RELEASE_VERSION }}
+          if-no-files-found: error
+          path: |
+            dist/QuaggansHoard-Setup-${{ env.RELEASE_VERSION }}.exe
+            dist/QuaggansHoard-Windows.zip
+
+      - name: Publish tagged release assets
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view '${{ github.ref_name }}' --json tagName 2> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create '${{ github.ref_name }}' --generate-notes --title "Quaggan's Hoard $env:RELEASE_VERSION"
+            if ($LASTEXITCODE -ne 0) { throw 'Could not create the GitHub release.' }
+          }
+          gh release upload '${{ github.ref_name }}' ".\dist\QuaggansHoard-Setup-$env:RELEASE_VERSION.exe" '.\dist\QuaggansHoard-Windows.zip' --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Could not upload the release files.' }

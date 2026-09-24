@@ -11,3 +11,4 @@ if ($LASTEXITCODE -ne 0) { throw 'Packaging failed.' }
 Copy-Item -LiteralPath 'WINDOWS.md' -Destination 'dist\QuaggansHoard\START-HERE.md'
 Compress-Archive -Path 'dist\QuaggansHoard' -DestinationPath 'dist\QuaggansHoard-Windows.zip' -Force
 Write-Output 'Ready: dist\QuaggansHoard-Windows.zip'
+Write-Output 'To build the installer, run: .\build-installer.ps1 -Version 1.0.0 -SkipApplicationBuild'
