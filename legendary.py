@@ -1,15 +1,10 @@
-"""Source-reviewed Bifrost recipe tree and request-local account allocation."""
-import json
+"""Request-local account allocation for dynamically imported legendary recipes."""
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
-from pathlib import Path
 from urllib.parse import quote
 
-CATALOG = json.loads((Path(__file__).parent / 'bifrost.json').read_text(encoding='utf-8'))
-
-
-def allocate(holdings, catalog=CATALOG):
+def allocate(holdings, catalog):
     remaining = defaultdict(int, holdings)
     shopping = {}
     needed = set()
@@ -46,7 +41,7 @@ def allocate(holdings, catalog=CATALOG):
             'needed_ids': sorted(needed - {catalog['root']})}
 
 
-def progress(key, fetch, catalog=CATALOG):
+def progress(key, fetch, catalog):
     jobs = [('Bank', '/account/bank', 'bank'), ('Shared inventory', '/account/inventory', 'shared'),
             ('Material storage', '/account/materials', 'materials'), ('Legendary Armory', '/account/legendaryarmory', 'armory'),
             ('Wallet', '/account/wallet', 'wallet')]

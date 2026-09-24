@@ -129,6 +129,8 @@ Each offer is an alternative calculation. The app does not combine offers into a
 
 Wiki information is matched back to the official item ID before it is used. Imported text and tables are displayed as data; the app does not execute wiki page code. Wiki-derived panels include the page or section link, revision information where available, contributor attribution, and licence link.
 
+Legendary catalogues and recipe trees are derived at runtime from the current Legendary Armory catalogue, official recipes, and item-matched wiki recipes. Cleanup collection relationships are derived from the current achievement catalogue and account progress. The application does not ship fixed legendary recipe trees or item-specific cleanup rule files.
+
 Public API and wiki information can be incomplete or delayed. The app treats unavailable checks as unknown rather than zero and never claims that every possible use has been found.
 
 ### Refresh account data

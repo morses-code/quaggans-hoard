@@ -11,7 +11,7 @@ import json
 class EvaluationTests(unittest.TestCase):
     def setUp(self):
         self.achievement = {'id': 1754, 'name': 'Koutalophile', 'bits': [{'type': 'Text'}, {'type': 'Item', 'id': 67193}]}
-        self.items = {'67193': {'type': 'Trophy', 'description': cleanup.RULES['67193']['expected_description']}}
+        self.items = {'67193': {'type': 'Trophy', 'description': cleanup.COLLECTION_ONLY}}
 
     def evaluate(self, progress, achievements=None, items=None):
         return cleanup.evaluate([67193], achievements if achievements is not None else [self.achievement], progress, self.items if items is None else items, 'now')['67193']

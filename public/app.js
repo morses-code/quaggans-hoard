@@ -20,8 +20,8 @@ async function updateApplicationData() {
       await api('/api/refresh', undefined, 60000, {method: 'POST', headers: {'Content-Type': 'application/json'}});
       collectionProgress = null; collectionController = null; bifrostProgress = null; bifrostCatalog = null;
       trackedProgress = null; trackedCatalog = null;
-      if (bifrostActive) {
-        trackedCatalog = await api(trackedLegendary === 30698 ? '/bifrost.json' : `/api/project-definition?id=${trackedLegendary}&route=${trackedRecipe}`, undefined, 60000);
+      if (bifrostActive && trackedLegendary) {
+        trackedCatalog = await api(`/api/project-definition?id=${trackedLegendary}&route=${trackedRecipe}`, undefined, 60000);
       }
       await loadCharacters(preferred);
       await loadLegendaryLibrary();
@@ -371,12 +371,8 @@ function renderCleanupDetails(item, slot) {
       row.append(sourceLink(collection.name, collection.url), document.createTextNode(` — ${collection.credited ? 'Credit confirmed' : 'Credit not confirmed'}${collection.repeatable ? ' (repeatable / resetting)' : ''}`));
       panel.append(row);
     }
-    if (advice.rule) {
-      panel.append(element('p', '', `Disposal rule reviewed ${advice.rule.reviewed}. Requires collection-only wording and confirmed credit.`));
-      panel.append(sourceLink('Verified item source', advice.rule.source));
-    }
   }
-  const wikiLink = advice?.rule?.wiki || advice?.wiki || `https://wiki.guildwars2.com/wiki/Special:Search?search=${encodeURIComponent(item.chat_link || item.name)}`;
+  const wikiLink = advice?.wiki || `https://wiki.guildwars2.com/wiki/Special:Search?search=${encodeURIComponent(item.chat_link || item.name)}`;
   const row = element('p', '');
   row.append(sourceLink('Look up this item on the GW2 Wiki', wikiLink));
   panel.append(row);

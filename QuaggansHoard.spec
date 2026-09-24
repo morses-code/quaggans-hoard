@@ -1,7 +1,7 @@
 from PyInstaller.utils.hooks import collect_data_files
 
 a = Analysis(['desktop.py'], pathex=[],
-    datas=[('public', 'public'), ('cleanup_rules.json', '.'), ('bifrost.json', '.')] + collect_data_files('webview'),
+    datas=[('public', 'public')] + collect_data_files('webview'),
     hiddenimports=['keyring.backends.Windows'],
     excludes=['PyQt5', 'PyQt6', 'PySide2', 'PySide6', 'tkinter'],
     noarchive=False)

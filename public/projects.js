@@ -5,7 +5,7 @@ let bifrostProgress;
 let bifrostController;
 let legendaryItems = [];
 let selectedLegendary = 0;
-let trackedLegendary = 30698;
+let trackedLegendary = 0;
 let selectedRecipe = 0;
 let trackedRecipe = 0;
 let trackedCatalog;
@@ -14,7 +14,7 @@ let selectionController;
 let collectionProgress;
 let collectionController;
 
-function projectName() { return bifrostCatalog?.name || legendaryItems.find(item => item.id === selectedLegendary)?.name || 'The Bifrost'; }
+function projectName() { return bifrostCatalog?.name || legendaryItems.find(item => item.id === selectedLegendary)?.name || 'Legendary project'; }
 function updateProjectHeading() {
   $('project-title').textContent = projectName();
   $('project-subtitle').textContent = 'Gather the requirements for your next legendary.';
@@ -94,7 +94,7 @@ async function selectLegendary(id, route = 0) {
   $('project-status').textContent = 'Loading this legendary’s recipe requirements…';
   const finish = showLookupLoading($('project-results'), 'Loading legendary requirements', signal);
   try {
-    const catalog = await api(id === 30698 ? '/bifrost.json' : `/api/project-definition?id=${id}&route=${route}`, signal, 60000);
+    const catalog = await api(`/api/project-definition?id=${id}&route=${route}`, signal, 60000);
     if (signal.aborted) return;
     bifrostCatalog = catalog;
     if (bifrostActive && trackedLegendary === id && trackedRecipe === route) trackedCatalog = bifrostCatalog;
@@ -484,7 +484,7 @@ async function refreshBifrost() {
   const finish = showLookupLoading($('project-results'), 'Counting gifts and materials across your account', signal);
   render();
   try {
-    const data = await api(`/api/projects/bifrost?id=${selectedLegendary}&route=${selectedRecipe}`, signal, 60000);
+    const data = await api(`/api/project-progress?id=${selectedLegendary}&route=${selectedRecipe}`, signal, 60000);
     if (signal.aborted) return;
     bifrostProgress = data;
     if (data.catalog) bifrostCatalog = data.catalog;
@@ -506,7 +506,7 @@ async function refreshBifrost() {
 
 async function initProjects() {
   try { bifrostActive = localStorage.getItem(bifrostPreference) === 'true'; } catch { /* Optional preference. */ }
-  try { trackedLegendary = Number(localStorage.getItem('quaggansHoard.trackedLegendary')) || 30698; } catch {}
+  try { trackedLegendary = Number(localStorage.getItem('quaggansHoard.trackedLegendary')) || 0; } catch {}
   try { trackedRecipe = Number(localStorage.getItem('quaggansHoard.trackedRecipe')) || 0; } catch {}
   $('project-recipe').onchange = () => selectLegendary(selectedLegendary, Number($('project-recipe').value));
   const updateTrackButton = updateProjectHeading;
@@ -535,10 +535,10 @@ async function initProjects() {
     } catch { $('project-status').textContent = 'Browser storage is blocked; the tracking preference could not be saved.'; }
   };
   try {
-    if (bifrostActive) {
+    if (bifrostActive && trackedLegendary) {
       const id = trackedLegendary;
       const route = trackedRecipe;
-      const catalog = await api(id === 30698 ? '/bifrost.json' : `/api/project-definition?id=${id}&route=${route}`, undefined, 60000);
+      const catalog = await api(`/api/project-definition?id=${id}&route=${route}`, undefined, 60000);
       if (bifrostActive && trackedLegendary === id && trackedRecipe === route) trackedCatalog = catalog;
     }
     render();

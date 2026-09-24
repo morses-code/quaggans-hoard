@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import quote
 import wiki_acquisition as wiki
-import legendary
 
 
 def catalogue(fetch):
@@ -113,9 +112,6 @@ def recipe_parts(text):
 
 def definition(item_id, fetch, route=0):
     if not 0 <= route < 32: raise ValueError('Choose a valid recipe route.')
-    if item_id == legendary.CATALOG['root']:
-        if route: raise ValueError('Choose a valid recipe route.')
-        return legendary.CATALOG
     if item_id not in {row['id'] for row in catalogue(fetch)}:
         raise ValueError('Choose an item from the legendary catalogue.')
 
@@ -128,11 +124,6 @@ def definition(item_id, fetch, route=0):
 
         def add(item_id, depth, path):
             if str(item_id) in nodes: return
-            if str(item_id) in legendary.CATALOG['nodes']:
-                node = legendary.CATALOG['nodes'][str(item_id)]
-                nodes[str(item_id)] = node
-                for part in node['ingredients']: add(part['id'], depth, path | {item_id})
-                return
             item = api_item(item_id)
             node = {'id': item_id, 'name': item['name'], 'icon': item.get('icon'),
                     'source': wiki.WIKI + '/wiki/' + quote(item['name'].replace(' ', '_'), safe=''),

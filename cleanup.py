@@ -2,7 +2,6 @@
 import json
 import time
 from datetime import datetime, timezone
-from pathlib import Path
 from threading import Lock
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import quote
@@ -10,7 +9,6 @@ from collections import defaultdict
 from math import ceil
 from item_uses import storage_summary
 
-RULES = json.loads((Path(__file__).parent / 'cleanup_rules.json').read_text(encoding='utf-8'))
 _catalog = None
 _catalog_at = 0
 _lock = Lock()
@@ -55,7 +53,6 @@ def evaluate(item_ids, achievements, progress, items, checked_at):
             })
     result = {}
     for item_id, collections in matches.items():
-        rule = RULES.get(item_id)
         item = items.get(item_id, {})
         status = 'check'
         reason = 'No verified disposal rule for this item. Collection credit alone does not establish that it has no other uses.'
@@ -66,19 +63,12 @@ def evaluate(item_ids, achievements, progress, items, checked_at):
             status = 'keep'
         elif any(c['repeatable'] for c in collections):
             reason = 'This item is linked to a repeatable or resetting achievement. It needs manual review.'
-        elif rule:
-            required = set(rule['achievements'])
-            if required.issubset({c['id'] for c in collections}) and item.get('description', '').strip() == rule['expected_description'] and item.get('type') == 'Trophy':
-                status = 'safe'
-                reason = 'The verified rule identifies this as collection-only, and the API confirms credit for every mapped objective. Sell to a vendor; discard only if you do not want its vendor value.'
-            else:
-                reason = 'The current item data or collection mapping differs from the verified rule. Manual review is required.'
         elif item.get('type') == 'Trophy' and item.get('description', '').strip() == COLLECTION_ONLY:
             status = 'safe'
             reason = 'The official item description explicitly says it is collection-only, and credit is confirmed for every directly mapped objective. This is not inferred merely from its Trophy type.'
         result[item_id] = {
             'status': status, 'reason': reason, 'collections': collections,
-            'checked_at': checked_at, 'rule': rule,
+            'checked_at': checked_at,
             'wiki': 'https://wiki.guildwars2.com/wiki/Special:Search?search=' + quote(item.get('chat_link') or item.get('name') or item_id),
         }
     return result

@@ -8,11 +8,12 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import server
+from project_fixture import PROJECT_CATALOG
 
 ITEM = {'id': 1, 'name': 'Test material', 'type': 'CraftingMaterial', 'description': 'A test item.'}
 PROJECT_HOLDINGS = {24277: 300, 19721: 260, 19976: 20}
-PROJECT_PLAN = server.legendary.allocate(PROJECT_HOLDINGS)
-OTHER_CATALOG = {'root': 30699, 'name': 'Bolt', 'nodes': {'30699': {'id': 30699, 'name': 'Bolt', 'source': 'https://wiki.guildwars2.com/wiki/Bolt', 'ingredients': [{'id': 19721, 'count': 300}]}, '19721': {**server.legendary.CATALOG['nodes']['19721']}}}
+PROJECT_PLAN = server.legendary.allocate(PROJECT_HOLDINGS, PROJECT_CATALOG)
+OTHER_CATALOG = {'root': 30699, 'name': 'Bolt', 'nodes': {'30699': {'id': 30699, 'name': 'Bolt', 'source': 'https://wiki.guildwars2.com/wiki/Bolt', 'ingredients': [{'id': 19721, 'count': 300}]}, '19721': {**PROJECT_CATALOG['nodes']['19721']}}}
 OTHER_CATALOG.update(routes=[{'id': 0, 'label': 'First recipe'}, {'id': 1, 'label': 'Alternative recipe'}], selected_route=0)
 OTHER_PLAN = server.legendary.allocate(PROJECT_HOLDINGS, OTHER_CATALOG)
 OTHER_ALT = json.loads(json.dumps(OTHER_CATALOG))
@@ -253,10 +254,10 @@ class FixtureHandler(server.Handler):
         project_plan = (OTHER_ALT_PLAN if route == '1' else OTHER_PLAN) if project_id == '30699' else PROJECT_PLAN
         fixtures = {
             '/api/legendary-progress': {'items': {'30698': {'percent': 94, 'current': 15, 'max': 16, 'owned': 0, 'achievements': [{'name': 'Legendary Weapon: The Bifrost'}]}, '30699': {'percent': 25, 'current': 4, 'max': 16, 'owned': 0, 'achievements': [{'name': 'Legendary Weapon: Bolt'}]}}, 'warnings': [], 'checked_at': '2026-09-23T10:00:00Z'},
-            '/api/legendaries': {'items': [{'id': 30698, 'name': 'The Bifrost', 'type': 'Weapon', 'subtype': 'Staff', 'weight': '', 'icon': server.legendary.CATALOG['nodes']['30698']['icon']}, {'id': 30699, 'name': 'Bolt', 'type': 'Weapon', 'subtype': 'Sword', 'weight': ''}]},
-            '/api/project-definition': other_catalog,
+            '/api/legendaries': {'items': [{'id': 30698, 'name': 'The Bifrost', 'type': 'Weapon', 'subtype': 'Staff', 'weight': '', 'icon': PROJECT_CATALOG['nodes']['30698']['icon']}, {'id': 30699, 'name': 'Bolt', 'type': 'Weapon', 'subtype': 'Sword', 'weight': ''}]},
+            '/api/project-definition': other_catalog if project_id == '30699' else PROJECT_CATALOG,
             '/api/acquisition': WIKI_FIXTURE,
-            '/api/projects/bifrost': {**project_plan, 'catalog': other_catalog if project_id == '30699' else server.legendary.CATALOG, 'coverage': 40, 'wallet': PROJECT_WALLET, 'acquisition_warnings': [], 'locations': {}, 'holdings': PROJECT_HOLDINGS, 'warnings': [], 'complete_scan': True, 'checked_at': '2026-09-23T10:00:00Z'},
+            '/api/project-progress': {**project_plan, 'catalog': other_catalog if project_id == '30699' else PROJECT_CATALOG, 'coverage': 40, 'wallet': PROJECT_WALLET, 'acquisition_warnings': [], 'locations': {}, 'holdings': PROJECT_HOLDINGS, 'warnings': [], 'complete_scan': True, 'checked_at': '2026-09-23T10:00:00Z'},
             '/api/item-locations': {'total': 5, 'locations': [{'location': 'Other Character', 'slot': 'Bag 1, slot 1', 'count': 5}], 'warnings': []},
             '/api/characters': ['Test Character'],
             '/api/character-profile': {'name': 'Test Character', 'profession': 'Guardian', 'race': 'Human', 'level': 80, 'art': '/art/guardian.jpg', 'icon': None},
